@@ -6,7 +6,7 @@
 
 if SERVER then
     require("astricunion/libs/holos.txt")
-    starfall_holo = {
+    body = {
           base = {
             hologram.createPart(
                 Holo(SubHolo(Vector(0,0,-400), nil, "models/dav0r/thruster.mdl", Vector(140,140,75), false, Color(255,0,0))),

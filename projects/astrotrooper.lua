@@ -8,8 +8,11 @@ require("sounds")
 require("light")
 
 
--- To add filter --
-function eyeTrace(ply, filter)
+---To add filter
+---@param ply Player
+---@param filter table | Entity
+---@return table TraceResult Result of the trace
+local function eyeTrace(ply, filter)
     local pos = ply:getEyePos()
     local ang = ply:getEyeAngles()
     return trace.line(pos, pos + ang:getForward() * 16384, filter)
