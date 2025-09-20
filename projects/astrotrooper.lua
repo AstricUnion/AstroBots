@@ -1,4 +1,4 @@
---@name Astro Trooper (BETA)
+--@name Astro Trooper
 --@author Astric Union
 --@shared
 
@@ -19,13 +19,11 @@ local function eyeTrace(ply, filter)
 end
 
 if SERVER then
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/movement.lua as movement
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
 
-    require("movement")
     require("guns")
     require("ftimers")
     require("astrobase")
@@ -211,7 +209,7 @@ if SERVER then
             can_dash = false
             astro.state = STATES.Dash
             local velocity = 30000
-            local direction = astro.movement:getDirection(dr)
+            local direction = astro:getDirection(dr)
             direction = direction:isZero() and astro.body:getForward() or direction
             playSound("dash", Vector(), astro.body)
             FTimer:new(3.5, 1, {
