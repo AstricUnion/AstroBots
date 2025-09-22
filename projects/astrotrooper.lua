@@ -1,5 +1,5 @@
---@name Astro Trooper
---@author Astric Union
+--@name AstroTrooper
+--@author AstricUnion
 --@shared
 
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
@@ -340,9 +340,9 @@ else
     local head
     local overlay = material.load("effects/combine_binocoverlay")
 
-    function createHud()
+    local function createHud()
         hook.add("DrawHUD", "", function()
-            sw, sh = render.getGameResolution()
+            local sw, sh = render.getGameResolution()
 
             ---- Aim ----
             render.drawCircle(sw / 2, sh / 2, 1)
@@ -394,7 +394,7 @@ else
         end)
     end
 
-    function removeHud()
+    local function removeHud()
         hook.remove("DrawHUD", "")
         hook.remove("CalcView", "")
         hook.remove("InputPressed", "")
