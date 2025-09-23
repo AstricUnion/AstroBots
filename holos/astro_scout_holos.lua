@@ -4,6 +4,26 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/holos.lua as holos
 require("holos")
 
+local function circlePos(ang, radius, pos)
+    local rad = math.rad(ang)
+    return Vector(math.sin(rad)*radius,0,math.cos(rad)*radius)+pos
+end
+
+local function prong(ang)
+    local prong = hologram.createPart(
+        Holo(SubHolo(Vector(-1.5,242,24))),
+        Holo(SubHolo(Vector(-1.5,242,48),Angle(145,90,-90),"models/props_combine/combine_barricade_bracket01a.mdl",Vector(1.4,1,1),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
+    )
+    prong:setLocalAngles(Angle(-ang,0,0))
+    return Holo(prong)
+end
+
+local function laserTube(ang)
+    local pos = circlePos(ang,18.5,Vector(-3,208,24))
+    return Holo(SubHolo(pos,Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
+end
+
+
 body = {
     base = {
         hologram.createPart(
@@ -90,14 +110,14 @@ body = {
                 Holo(SubHolo(Vector(-3,170,26))),
                 Holo(SubHolo(Vector(-3,174,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.5,0.5,6),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
                 Holo(SubHolo(Vector(-3,242,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.46,0.46,5.5),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-                Holo(SubHolo(Vector(-3,208,42.5),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-                Holo(SubHolo(Vector(-3,208,5.5),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-                Holo(SubHolo(Vector(15.5,208,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-                Holo(SubHolo(Vector(-21.5,208,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-                Holo(SubHolo(Vector(-16.25,208,37.25),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-                Holo(SubHolo(Vector(-16.25,208,11.5),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-                Holo(SubHolo(Vector(10.25,208,11.5),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-                Holo(SubHolo(Vector(10.25,208,37.5),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.06,0.06,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
+                laserTube(0),
+                laserTube(45),
+                laserTube(90),
+                laserTube(135),
+                laserTube(180),
+                laserTube(-135),
+                laserTube(-90),
+                laserTube(-45)
             ),
             hologram.createPart(
                 Holo(SubHolo(Vector(-3,208,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.28,0.28,18),true,Color(255,40,40,255),"models/debug/debugwhite")),
@@ -109,11 +129,14 @@ body = {
             hologram.createPart(
                 Holo(SubHolo(Vector(-3,250,24),Angle(90,90,0),"models/hunter/tubes/tube1x1x1.mdl",Vector(0.7,0.7,0.15),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
                 Holo(SubHolo(Vector(-3,250,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.3,0.3,3),true,Color(255,40,40,255),"models/debug/debugwhite")),
-                Holo(SubHolo(Vector(-1.5,242,48),Angle(145,90,-90),"models/props_combine/combine_barricade_bracket01a.mdl",Vector(1.4,1,1),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
-                --Holo(SubHolo(Vector(-24.5,242,12),Angle(-35,-45,-135),"models/props_combine/combine_barricade_bracket01a.mdl",Vector(1.4,1,1),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
+                prong(0),
+                prong(90),
+                prong(180),
+                prong(-90)
             )
-        }
-        --[[hologram.createPart(
+        },
+        --[[
+        hologram.createPart(
             Holo(SubHolo(Vector(-3,253,24))),
             Holo(SubHolo(Vector(-3,260,24),Angle(260,90,180),"models/props_combine/combine_booth_short01a.mdl",Vector(0.2,0.34,0.4),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
             Holo(SubHolo(Vector(-3,260,24),Angle(-280,90,0),"models/props_combine/combine_booth_short01a.mdl",Vector(0.2,0.34,0.4),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
