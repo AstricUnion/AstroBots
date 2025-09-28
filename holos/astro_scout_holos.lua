@@ -11,7 +11,7 @@ end
 
 local function prong(ang)
     local prong = hologram.createPart(
-        Holo(SubHolo(Vector(-1.5,242,24))),
+        Holo(Rig(Vector(-1.5,242,24))),
         Holo(SubHolo(Vector(-1.5,242,48),Angle(145,90,-90),"models/props_combine/combine_barricade_bracket01a.mdl",Vector(1.4,1,1),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
     )
     prong:setLocalAngles(Angle(-ang,0,0))
@@ -26,7 +26,7 @@ end
 body = {
     base = {
         hologram.createPart(
-            Holo(SubHolo(Vector(0,0,19))),
+            Holo(Rig(Vector(0,0,19))),
             Holo(SubHolo(Vector(0,0,19),Angle(0,0,90),"models/props_wasteland/wheel03a.mdl",Vector(0.65,0.2,0.65),false,Color(255,40,40))),
             Holo(SubHolo(Vector(0,0,0),Angle(0,0,90),"models/props_wasteland/wheel03a.mdl",Vector(0.65,0.2,0.65),false,Color(255,40,40))),
             Holo(SubHolo(Vector(0,0,8),Angle(0),"models/props_phx/construct/metal_angle360.mdl",Vector(1.3,1.3,3),false,Color(255,40,40))),
@@ -45,7 +45,7 @@ body = {
             Holo(SubHolo(Vector(-70,0,4),Angle(0,180,0),"models/props_combine/combine_barricade_med01a.mdl",Vector(0.4,0.6,0.35),false,Color(255,40,40)))
         ),
         hologram.createPart(
-            Holo(SubHolo(Vector(0,0,10))),
+            Holo(Rig(Vector(0,0,10))),
             Holo(SubHolo(Vector(0,0,10),Angle(0,0,90),"models/props_wasteland/wheel02b.mdl",Vector(1),false,Color(255,40,40))),
             Holo(SubHolo(Vector(30,0,15),Angle(5,-5,-45),"models/Gibs/helicopter_brokenpiece_03.mdl",Vector(1),false,Color(255,40,40))),
             Holo(SubHolo(Vector(22,-22,15),Angle(5,-50,-45),"models/Gibs/helicopter_brokenpiece_03.mdl",Vector(1),false,Color(255,40,40))),
@@ -58,6 +58,7 @@ body = {
         )
     },
     head = hologram.createPart(
+        Holo(Rig(Vector(0,0,68))),
         Holo(SubHolo(Vector(0,0,68),Angle(0),"models/hunter/misc/sphere075x075.mdl",Vector(1.4,1.4,1.4),true,Color(0,0,0),"models/debug/debugwhite")),
         Holo(SubHolo(Vector(14,0,68),Angle(0),"models/hunter/misc/sphere075x075.mdl",Vector(0.6,1.1,1.1),true,Color(255,40,40),"models/debug/debugwhite")),
         Holo(SubHolo(Vector(24.2,0,67),Angle(-90,0,0),"models/hunter/triangles/025x025mirrored.mdl",Vector(1.4,0.9,1.3),true,Color(255,255,255),"models/debug/debugwhite")),
@@ -72,20 +73,20 @@ body = {
     ),
     rightarm = {
         hologram.createPart(
-            Holo(SubHolo(Vector(-3,-85,26),Angle(0,-90,0))),
+            Holo(Rig(Vector(-3,-85,26),Angle(0,-90,0))),
             Holo(SubHolo(Vector(-3,-110,7),Angle(0,90,0),"models/props_combine/CombineTrain01a.mdl",Vector(0.18,0.3,0.12),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,-130,32),Angle(-90,90,0),"models/props_combine/combineinnerwallcluster1024_003a.mdl",Vector(0.08,0.06,0.10),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,-69,30),Angle(220,270,180),"models/props_combine/combine_barricade_med02a.mdl",Vector(0.4,0.4,0.4),false,Color(255,40,40)))
         ),
         hologram.createPart(
-            Holo(SubHolo(Vector(-3,-170,26),Angle(0,-90,0))),
+            Holo(Rig(Vector(-3,-170,26),Angle(0,-90,0))),
             Holo(SubHolo(Vector(-3,-200,9),Angle(0,90,0),"models/props_combine/CombineTrain01a.mdl",Vector(0.16,0.26,0.10),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,-220,24),Angle(-90,90,0),"models/props_combine/combineinnerwallcluster1024_003a.mdl",Vector(0.06,0.04,0.08),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,-200,40),Angle(-105,-90,180),"models/props_combine/tprotato2.mdl",Vector(0.8,0.8,0.8),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,-190,24),Angle(270,90,0),"models/props_combine/combine_mortar01b.mdl",Vector(1.2),false,Color(255,40,40)))
         ),
         hologram.createPart(
-            Holo(SubHolo(Vector(-3,-253,24),Angle(0,-90,0))),
+            Holo(Rig(Vector(-3,-253,24),Angle(0,-90,0))),
             Holo(SubHolo(Vector(-3,-260,24),Angle(280,90,0),"models/props_combine/combine_booth_short01a.mdl",Vector(0.2,0.34,0.4),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
             Holo(SubHolo(Vector(-3,-260,24),Angle(-260,90,180),"models/props_combine/combine_booth_short01a.mdl",Vector(0.2,0.34,0.4),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
             Holo(SubHolo(Vector(-16,-305,22),Angle(10,90,0),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,2),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
@@ -100,14 +101,14 @@ body = {
     },
     leftarm = {
         hologram.createPart(
-            Holo(SubHolo(Vector(-3,85,26),Angle(0,90,0))),
+            Holo(Rig(Vector(-3,85,26),Angle(0,90,0))),
             Holo(SubHolo(Vector(-3,110,7),Angle(0,-90,0),"models/props_combine/CombineTrain01a.mdl",Vector(0.18,0.3,0.12),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,130,32),Angle(-90,-90,0),"models/props_combine/combineinnerwallcluster1024_003a.mdl",Vector(0.08,0.06,0.10),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,69,30),Angle(220,-270,180),"models/props_combine/combine_barricade_med02a.mdl",Vector(0.4,0.4,0.4),false,Color(255,40,40)))
         ),
         laser = {
             hologram.createPart(
-                Holo(SubHolo(Vector(-3,170,26),Angle(0,90,0))),
+                Holo(Rig(Vector(-3,170,26),Angle(0,90,0))),
                 Holo(SubHolo(Vector(-3,174,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.5,0.5,6),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
                 Holo(SubHolo(Vector(-3,242,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.46,0.46,5.5),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
                 laserTube(0),
@@ -120,7 +121,7 @@ body = {
                 laserTube(-45)
             ),
             hologram.createPart(
-                Holo(SubHolo(Vector(-3,208,24),Angle(0,90,0))),
+                Holo(Rig(Vector(-3,208,24),Angle(0,90,0))),
                 Holo(SubHolo(Vector(-3,208,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.28,0.28,18),true,Color(255,40,40,255),"models/debug/debugwhite")),
                 Holo(SubHolo(Vector(-3,208,36.5),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.04,0.04,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
                 Holo(SubHolo(Vector(-3,208,11.5),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.04,0.04,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
@@ -128,7 +129,7 @@ body = {
                 Holo(SubHolo(Vector(10,208,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.04,0.04,18),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
             ),
             hologram.createPart(
-                Holo(SubHolo(Vector(-3,250,24),Angle(0,90,0))),
+                Holo(Rig(Vector(-3,250,24),Angle(0,90,0))),
                 Holo(SubHolo(Vector(-3,250,24),Angle(90,90,0),"models/hunter/tubes/tube1x1x1.mdl",Vector(0.7,0.7,0.15),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
                 Holo(SubHolo(Vector(-3,250,24),Angle(90,90,0),"models/hunter/tubes/circle2x2.mdl",Vector(0.3,0.3,3),true,Color(255,40,40,255),"models/debug/debugwhite")),
                 prong(0),

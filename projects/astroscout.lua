@@ -1,6 +1,8 @@
---@name AstroScout
+--@name AstroScout (WIP)
 --@author AstricUnion
 --@shared
+--@include astricunion/libs/guns.lua
+require("astricunion/libs/guns.lua")
 
 
 ---To add filter
@@ -12,6 +14,7 @@ local function eyeTrace(ply, filter)
     local ang = ply:getEyeAngles()
     return trace.line(pos, pos + ang:getForward() * 16384, filter)
 end
+
 
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
@@ -27,7 +30,9 @@ if SERVER then
     -- States
     local STATES = {
         NotInUse = -1,
-        Idle = 1
+        Idle = 1,
+        Attack = 3,
+        Laser = 2
     }
 
     local seat = prop.createSeat(chip():getPos() + Vector(0, 0, 20), Angle(), "models/nova/airboat_seat.mdl")
@@ -60,6 +65,9 @@ if SERVER then
     body.rightarm[2]:setLocalAngles(Angle(-100, 0, 0))
     body.rightarm[3]:setLocalAngles(Angle(0, 10, 90))
 
+
+    local laser = Laser:new(body.leftarm.laser[2], 14)
+
     -- Idle animation
     local base_pos
     local head_pos
@@ -87,8 +95,6 @@ if SERVER then
         end
     })
 
-    local is_in_attack = false
-
     -- Attack animation
     function attackAnimation()
         local arm1ang
@@ -96,7 +102,7 @@ if SERVER then
         local arm3ang
         local baseang
         IdleAnimation:pause()
-        is_in_attack = true
+        astro:setState(STATES.Attack)
         FTimer:new(1, 1, {
             [0] = function()
                 arm1ang = body.rightarm[1]:getLocalAngles()
@@ -111,55 +117,61 @@ if SERVER then
             ["0.3-0.5"] = function(_, _, fraction)
                 local smoothed = math.easeInOutCubic(fraction)
                 body.base[1]:setLocalAngles(baseang - Angle(0, -70, 10) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -70, -120) * smoothed)
+                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
                 body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
                 body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
             end,
             ["0.6-1"] = function(_, _, fraction)
                 local smoothed = math.easeInOutCubic(1 - fraction)
                 body.base[1]:setLocalAngles(baseang - Angle(0, -70, 10) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -70, -120) * smoothed)
+                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
                 body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
                 body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
             end,
             [1] = function()
                 IdleAnimation:start()
-                is_in_attack = false
+                astro:setState(STATES.Idle)
             end
         })
     end
 
 
     -- Laser animation
-    local is_laser = false
-
-    function laserAnimation()
-        local arm1ang
-        local arm2ang
-        local baseang
+    local function laserOnAnimation()
+        local arm2ang = body.leftarm.laser[1]:getLocalAngles()
+        local baseang = body.base[1]:getLocalAngles()
         IdleAnimation:pause()
-        FTimer:new(2, 1, {
-            [0] = function()
-                arm1ang = body.leftarm[1]:getLocalAngles()
-                arm2ang = body.leftarm.laser[1]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-            end,
-            ["0-0.5"] = function(_, _, fraction)
+        is_laser = true
+        body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 800))
+        FTimer:new(0.5, 1, {
+            ["0-1"] = function(_, _, fraction)
                 local smoothed = math.easeInOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, 30, -10) * smoothed)
-                local res = eyeTrace(seat:getDriver(), ignore)
-                local to_world = (res.HitPos - body.leftarm[1]:getPos()):getAngle()
-                local to = body.leftarm[1]:worldToLocalAngles(to_world)
-                body.leftarm[1]:setLocalAngles(arm1ang - (Angle(40, 120, 120) + to) * smoothed)
-                body.leftarm.laser[1]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
-            end,
-            [0.5] = function(f)
-                is_laser = true
-                f:pause()
+                body.base[1]:setLocalAngles(baseang - (Angle(0, 30, -10) - baseang) * smoothed)
+                body.leftarm.laser[1]:setLocalAngles(arm2ang - arm2ang * smoothed)
             end,
             [1] = function()
-                IdleAnimation:start()
+                laser:start()
             end
+        })
+    end
+
+    local function laserOffAnimation()
+        local arm1ang = body.leftarm[1]:getLocalAngles()
+        local arm2ang = body.leftarm.laser[1]:getLocalAngles()
+        local baseang = body.base[1]:getLocalAngles()
+        IdleAnimation:pause()
+        is_laser = false
+        body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
+        FTimer:new(0.5, 1, {
+            ["0-1"] = function(_, _, fraction)
+                local smoothed = math.easeInOutCubic(fraction)
+                body.base[1]:setLocalAngles(baseang - baseang * smoothed)
+                body.leftarm.laser[1]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
+                body.leftarm[1]:setLocalAngles(arm1ang + (Angle(40, 120, 120) - arm1ang) * smoothed)
+            end,
+            [1] = function()
+                laser:stop()
+            end,
         })
     end
 
@@ -171,11 +183,12 @@ if SERVER then
                 local res = eyeTrace(driver, ignore)
                 body.leftarm[1]:setAngles(
                     math.lerpAngle(
-                        0.5,
+                        0.2,
                         body.leftarm[1]:getAngles(),
                         (res.HitPos - body.leftarm[1]:getPos()):getAngle()
                     )
                 )
+                laser:think()
             end
         end)
     end)
@@ -183,10 +196,20 @@ if SERVER then
 
     hook.add("KeyPress", "", function(ply, key)
         if ply == seat:getDriver() then
-            if key == IN_KEY.ATTACK2 and not is_in_attack and not is_in_laser then
-                attackAnimation()
-            elseif key == IN_KEY.ATTACK and not is_in_attack and not is_in_laser then
-                laserAnimation()
+            if !(is_in_attack or is_laser) then
+                if key == IN_KEY.ATTACK2 then
+                    attackAnimation()
+                elseif key == IN_KEY.ATTACK then
+                    laserOnAnimation()
+                end
+            end
+        end
+    end)
+
+    hook.add("KeyRelease", "", function(ply, key)
+        if ply == seat:getDriver() then
+            if key == IN_KEY.ATTACK and is_laser then
+                laserOffAnimation()
             end
         end
     end)
