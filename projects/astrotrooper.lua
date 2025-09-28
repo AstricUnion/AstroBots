@@ -8,16 +8,6 @@ require("sounds")
 require("light")
 
 
----To add filter
----@param ply Player
----@param filter table | Entity
----@return table TraceResult Result of the trace
-local function eyeTrace(ply, filter)
-    local pos = ply:getEyePos()
-    local ang = ply:getEyeAngles()
-    return trace.line(pos, pos + ang:getForward() * 16384, filter)
-end
-
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
@@ -121,14 +111,15 @@ if SERVER then
 
     -- Movement hook. There is all movement (blaster rotation, astro.head rotation, movement object think) --
     hook.add("Think", "Movement", function()
-        astro:think(function(driver)
-            local eye_trace = eyeTrace(driver, ignore)
+        astro:think(function()
+            local eyeTrace = astro:eyeTrace()
+            if not eyeTrace then return end
             if astro.state == STATES.Idle then
                 if blaster.left:isAlive() then
-                    blaster.left.hitbox:setAngles((eye_trace.HitPos - blaster.left.hitbox:getPos()):getAngle())
+                    blaster.left.hitbox:setAngles((eyeTrace.HitPos - blaster.left.hitbox:getPos()):getAngle())
                 end
                 if blaster.right:isAlive() then
-                    blaster.right.hitbox:setAngles((eye_trace.HitPos - blaster.right.hitbox:getPos()):getAngle())
+                    blaster.right.hitbox:setAngles((eyeTrace.HitPos - blaster.right.hitbox:getPos()):getAngle())
                 end
             end
         end)
@@ -138,14 +129,14 @@ if SERVER then
     -- Controls hook --
 
     -- Blaster shoot functions
-    function ammoUpdate(is_left, ammo)
+    local function ammoUpdate(is_left, ammo)
         net.start("AmmoUpdate")
         net.writeBool(is_left)
         net.writeInt(ammo, 4)
         net.send(find.allPlayers())
     end
 
-    function leftShoot()
+    local function leftShoot()
         blaster.left:shoot(
             -- Shoot sound
             function()
@@ -163,7 +154,7 @@ if SERVER then
         )
     end
 
-    function rightShoot()
+    local function rightShoot()
         blaster.right:shoot(
             -- Shoot sound
             function()
@@ -259,8 +250,8 @@ if SERVER then
 
 
     -- On enter and leave --
-    hook.add("PlayerEnteredVehicle", "", function(ply, seat) astro:enter(ply, seat) end)
-    hook.add("PlayerLeaveVehicle", "", function(ply, seat) astro:leave(ply, seat) end)
+    hook.add("PlayerEnteredVehicle", "", function(ply, vehicle) astro:enter(ply, vehicle) end)
+    hook.add("PlayerLeaveVehicle", "", function(ply, vehicle) astro:leave(ply, vehicle) end)
 
     -- On chip remove --
     hook.add("Removed", "", function()
