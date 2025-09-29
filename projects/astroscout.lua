@@ -28,7 +28,10 @@ if SERVER then
         Laser = 2
     }
 
-    ---@type Vehicle | Entity
+    createLight("Main", body.base[1], Vector(0, 0, 30), 80, 10, Color(255, 0, 0))
+    createLight("Underglow", body.base[1], Vector(0, 0, -40), 80, 10, Color(255, 0, 0))
+
+    ---@type Vehicle
     local seat = prop.createSeat(chip():getPos() + Vector(0, 0, 20), Angle(), "models/nova/airboat_seat.mdl")
     local size = Vector(80, 80, 20)
     local headsize = Vector(30, 30, 30)
@@ -88,8 +91,80 @@ if SERVER then
         end
     })
 
-    -- Attack animation
-    local function attackAnimation()
+    -- Attack function
+    local function attack()
+        local arm1ang
+        local arm2ang
+        local arm3ang
+        local baseang
+        IdleAnimation:pause()
+        astro:setState(STATES.Attack)
+        FTimer:new(0.5, 1, {
+            [0] = function()
+                arm1ang = body.rightarm[1]:getLocalAngles()
+                arm2ang = body.rightarm[2]:getLocalAngles()
+                arm3ang = body.rightarm[3]:getLocalAngles()
+                baseang = body.base[1]:getLocalAngles()
+            end,
+            ["0-0.2"] = function(_, _, fraction)
+                local smoothed = math.easeOutCubic(fraction)
+                body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
+            end,
+            ["0.2-0.5"] = function(_, _, fraction)
+                local smoothed = math.easeInOutCubic(fraction)
+                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
+                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
+                body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
+                body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
+                local armPos = body.rightarm[3]:getPos()
+                local armForward = body.rightarm[3]:getForward()
+                local armUp = body.rightarm[3]:getUp()
+                local armRight = body.rightarm[3]:getRight()
+                local entsToDamage = find.inBox(
+                    armPos - (
+                        armUp * 80
+                        + armRight * 80
+                    ),
+                    armPos + (
+                        armUp * 80
+                        + armRight * 80
+                        + armForward * 80
+                    )
+                )
+                for _, ent in ipairs(entsToDamage) do
+                    if ent == astro.body then continue end
+                    if isValid(ent) then
+                        local velocityPermitted, _ = hasPermission("entities.setVelocity", ent)
+                        if velocityPermitted and game.getTickCount() % 2 == 0 then
+                            if !ent:isNPC() and ent:isValidPhys() then
+                                ent:getPhysicsObject():setVelocity(armForward * 1000)
+                            elseif ent:isNPC() then
+                                ent:setVelocity(armForward * 1000)
+                            end
+                        end
+                        local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
+                        if damagePermitted then
+                            ent:applyDamage(350, nil, nil, DAMAGE.CRUSH)
+                        end
+                    end
+                end
+            end,
+            ["0.7-1"] = function(_, _, fraction)
+                local smoothed = math.easeInCubic(1 - fraction)
+                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
+                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
+                body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
+                body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
+            end,
+            [1] = function()
+                IdleAnimation:start()
+                astro:setState(STATES.Idle)
+            end
+        })
+    end
+
+
+    local function altAttack()
         local arm1ang
         local arm2ang
         local arm3ang
@@ -103,20 +178,20 @@ if SERVER then
                 arm3ang = body.rightarm[3]:getLocalAngles()
                 baseang = body.base[1]:getLocalAngles()
             end,
-            ["0-0.3"] = function(_, _, fraction)
-                local smoothed = math.easeInOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, 50, 0) * smoothed)
+            ["0-0.2"] = function(_, _, fraction)
+                local smoothed = math.easeOutCubic(fraction)
+                body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
             end,
-            ["0.3-0.5"] = function(_, _, fraction)
+            ["0.2-0.6"] = function(_, _, fraction)
                 local smoothed = math.easeInOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 10) * smoothed)
+                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
                 body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
                 body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
                 body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
             end,
-            ["0.6-1"] = function(_, _, fraction)
-                local smoothed = math.easeInOutCubic(1 - fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 10) * smoothed)
+            ["0.7-1"] = function(_, _, fraction)
+                local smoothed = math.easeInCubic(1 - fraction)
+                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
                 body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
                 body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
                 body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
@@ -130,7 +205,7 @@ if SERVER then
 
 
     -- Laser animation
-    local function laserOnAnimation()
+    local function laserOn()
         local arm2ang = body.leftarm.laser[1]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
         IdleAnimation:pause()
@@ -149,12 +224,13 @@ if SERVER then
         })
     end
 
-    local function laserOffAnimation()
+
+    local function laserOff()
         local arm1ang = body.leftarm[1]:getLocalAngles()
         local arm2ang = body.leftarm.laser[1]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
-        IdleAnimation:pause()
         astro:setState(STATES.Idle)
+        IdleAnimation:pause()
         laser:stop()
         body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
         FTimer:new(0.5, 1, {
@@ -163,14 +239,24 @@ if SERVER then
                 body.base[1]:setLocalAngles(baseang - baseang * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
                 body.leftarm[1]:setLocalAngles(arm1ang + (Angle(40, 120, 120) - arm1ang) * smoothed)
+            end,
+            [1] = function()
+                IdleAnimation:start()
             end
         })
     end
 
 
+    timer.create("increaseLaser", 0, 0, function()
+        if astro:getState() ~= STATES.Laser then
+            laser:increaseCharge(0.16)
+        end
+    end)
+
+
     -- Movement think --
     hook.add("Think", "Movement", function()
-        astro:think(function(driver)
+        astro:think(function()
             if astro:getState() == STATES.Laser then
                 local res = astro:eyeTrace()
                 body.leftarm[1]:setAngles(
@@ -180,6 +266,7 @@ if SERVER then
                         (res.HitPos - body.leftarm[1]:getPos()):getAngle()
                     )
                 )
+                laser:decreaseCharge(0.16 * game.getTickInterval())
                 laser:think()
             end
         end)
@@ -189,26 +276,31 @@ if SERVER then
     hook.add("KeyPress", "", function(ply, key)
         if ply == seat:getDriver() then
             if astro:getState() == STATES.Idle then
-                if key == IN_KEY.ATTACK2 then
-                    attackAnimation()
-                elseif key == IN_KEY.ATTACK then
-                    laserOnAnimation()
+                if key == IN_KEY.ATTACK then
+                    attack()
+                elseif key == IN_KEY.ATTACK2 then
+                    altAttack()
+                elseif key == IN_KEY.RELOAD then
+                    laserOn()
                 end
             end
         end
     end)
 
+
     hook.add("KeyRelease", "", function(ply, key)
         if ply == seat:getDriver() then
-            if key == IN_KEY.ATTACK and astro:getState() == STATES.Laser then
-                laserOffAnimation()
+            if key == IN_KEY.RELOAD and astro:getState() == STATES.Laser then
+                laserOff()
             end
         end
     end)
 
+
     -- On enter and leave --
     hook.add("PlayerEnteredVehicle", "", function(ply, vehicle) astro:enter(ply, vehicle) end)
     hook.add("PlayerLeaveVehicle", "", function(ply, vehicle) astro:leave(ply, vehicle) end)
+
 
     -- On chip remove --
     hook.add("Removed", "", function()

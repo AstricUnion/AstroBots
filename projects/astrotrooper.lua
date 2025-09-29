@@ -68,7 +68,7 @@ if SERVER then
     blaster.right:addIgnore(blaster.left.hitbox)
 
 
-    -- Parenting --MuzzleEffect
+    -- Parenting --
     body.base[1]:setParent(astro.body)
     body.base[2]:setParent(body.base[1])
     body.base[3]:setParent(body.base[1])
