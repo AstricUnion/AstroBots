@@ -39,7 +39,7 @@ if SERVER then
     local headsize = Vector(30, 30, 30)
     local body_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 10), Angle(), size, true)
     local head_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 60), Angle(), headsize, true)
-    local astro = AstroBase:new(STATES, body_hitbox, head_hitbox, seat, 65000)
+    local astro = AstroBase:new(STATES, body_hitbox, head_hitbox, seat, 1)
 
     body.base[1]:setParent(body_hitbox)
     body.base[2]:setParent(body.base[1])
@@ -316,6 +316,39 @@ if SERVER then
     hook.add("PlayerEnteredVehicle", "", function(ply, vehicle) astro:enter(ply, vehicle) end)
     hook.add("PlayerLeaveVehicle", "", function(ply, vehicle) astro:leave(ply, vehicle) end)
 
+    -- Driver defense, because driver can be killed, except a bot health --
+    hook.add("EntityTakeDamage", "DriverDefense", function(target, _, _) 
+        if target == seat:getDriver() then return true end
+    end)
+
+    -- Health --
+    hook.add("EntityTakeDamage", "health", function(target, _, _, amount)
+        if target == astro.body or target == astro.head then
+            astro:damage(amount, function()
+                -- Remove hooks
+                hook.remove("KeyPress", "")
+                hook.remove("KeyRelease", "")
+                hook.remove("Think", "Movement")
+                hook.remove("EntityTakeDamage", "health")
+                hook.remove("EntityTakeDamage", "DriverDefense")
+                timer.remove("increaseLaser")
+
+                -- Remove animation
+                IdleAnimation:remove()
+                laserOff()
+                body.base[2]:setLocalAngularVelocity(Angle())
+                body.leftarm.laser[2]:setLocalAngularVelocity(Angle())
+                body.leftarm.laser[3]:setLocalAngularVelocity(Angle())
+
+                -- Remove lights
+                removeLight("Main")
+                removeLight("Underglow")
+            end)
+            net.start("AstroHealthUpdate")
+            net.writeInt(astro.health, 16)
+            net.send(find.allPlayers())
+        end
+    end)
 
     -- On chip remove --
     hook.add("Removed", "", function()
@@ -361,8 +394,8 @@ else
                     :setLabelLeft("HP")
             end
             local current = healthBar.current_percent
-            healthBar:setPercent(astroHealth / 6500)
-                :setLabelRight(tostring(astroHealth) .. "%")
+            healthBar:setLabelRight(tostring(astroHealth) .. "%")
+                :setPercent(astroHealth / 6500)
                 :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
                 :draw()
         end)
@@ -379,7 +412,6 @@ else
     local function removeHud()
         hook.remove("DrawHUD", "")
         hook.remove("CalcView", "")
-        hook.remove("InputPressed", "")
     end
 
     net.receive("OnEnter", function()
@@ -398,7 +430,7 @@ else
     end)
 
     net.receive("AstroHealthUpdate", function()
-        astroHealth = net.readFloat(13)
+        astroHealth = net.readInt(16)
     end)
 
     net.receive("LaserChargeUpdate", function()
