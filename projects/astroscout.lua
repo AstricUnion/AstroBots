@@ -4,9 +4,11 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
+--@include astricunion/libs/guns.lua
 require("sounds")
 require("light")
-require("guns")
+-- require("guns")
+require("astricunion/libs/guns.lua")
 
 
 if SERVER then
@@ -247,9 +249,19 @@ if SERVER then
     end
 
 
+    local function syncLaser()
+        local dr = seat:getDriver()
+        if isValid(dr) then
+            net.start("LaserChargeUpdate")
+            net.writeFloat(laser:getCharge())
+            net.send(dr)
+        end
+    end
+
     timer.create("increaseLaser", 0, 0, function()
         if astro:getState() ~= STATES.Laser then
-            laser:increaseCharge(0.16)
+            laser:increaseCharge(0.016)
+            syncLaser()
         end
     end)
 
@@ -266,7 +278,10 @@ if SERVER then
                         (res.HitPos - body.leftarm[1]:getPos()):getAngle()
                     )
                 )
-                laser:decreaseCharge(0.16 * game.getTickInterval())
+                laser:decreaseCharge(0.16 * game.getTickInterval(), function()
+                    laserOff()
+                end)
+                syncLaser()
                 laser:think()
             end
         end)
@@ -313,8 +328,18 @@ if SERVER then
     end)
 
 else
+    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
+    require("ui")
 
     local head
+
+    ---@type Bar
+    local laserBar
+    ---@type Bar
+    local healthBar
+    ---@type number
+    local astroHealth = 6500
+
 
     local function createHud()
         hook.add("DrawHUD", "", function()
@@ -322,6 +347,24 @@ else
 
             ---- Aim ----
             render.drawCircle(sw / 2, sh / 2, 1)
+
+            ---- Laser ----
+            if !laserBar then
+                laserBar = Bar:new(sw * 0.1, sh * 0.8, 200, 30, 1)
+                    :setLabelLeft("LASER")
+            end
+            laserBar:setLabelRight(tostring(math.round(laserBar.current_percent * 100)) .. "%"):draw()
+
+            ---- HP ----
+            if !healthBar then
+                healthBar = Bar:new(sw / 2 - 100, sh * 0.8, 200, 30, 1)
+                    :setLabelLeft("HP")
+            end
+            local current = healthBar.current_percent
+            healthBar:setPercent(astroHealth / 6500)
+                :setLabelRight(tostring(astroHealth) .. "%")
+                :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
+                :draw()
         end)
 
         hook.add("CalcView", "", function(_, ang)
@@ -355,7 +398,14 @@ else
     end)
 
     net.receive("AstroHealthUpdate", function()
-        astroHealth = net.readInt(12)
+        astroHealth = net.readFloat(13)
+    end)
+
+    net.receive("LaserChargeUpdate", function()
+        local percent = net.readFloat()
+        if laserBar then
+            laserBar:setPercent(percent)
+        end
     end)
 end
 
