@@ -200,15 +200,18 @@ if SERVER then
             can_dash = false
             astro.state = STATES.Dash
             local velocity = 30000
-            local direction = astro:getDirection(dr)
-            direction = direction:isZero() and astro.body:getForward() or direction
+            local direction
             playSound("dash", Vector(), astro.body)
             FTimer:new(3.5, 1, {
-                ["0-0.2"] = blaster.left:isAlive() and function(_, _, fraction)
+                ["0-0.25"] = blaster.left:isAlive() and function(_, _, fraction)
                     local smoothed = math.easeInOutSine(fraction)
                     local ang = -180 * smoothed
                     blaster.left.hitbox:setLocalAngles(Angle(ang, 0, 0))
                 end or nil,
+                [0.25] = function()
+                    direction = astro:getDirection()
+                    direction = direction:isZero() and astro.body:getForward() or direction
+                end,
                 ["0.1-0.3"] = blaster.right:isAlive() and function(_, _, fraction)
                     local smoothed = math.easeInOutSine(fraction)
                     local ang = -180 * smoothed
@@ -245,21 +248,6 @@ if SERVER then
                     end)
                 end
             })
-        end
-    end)
-
-
-    -- On enter and leave --
-    hook.add("PlayerEnteredVehicle", "", function(ply, vehicle) astro:enter(ply, vehicle) end)
-    hook.add("PlayerLeaveVehicle", "", function(ply, vehicle) astro:leave(ply, vehicle) end)
-
-    -- On chip remove --
-    hook.add("Removed", "", function()
-        if seat and isValid(seat) then
-            local driver = seat:getDriver()
-            if isValid(driver) then
-                driver:setColor(Color(255, 255, 255, 255))
-            end
         end
     end)
 
@@ -309,11 +297,6 @@ if SERVER then
             net.writeInt(astro.health, 12)
             net.send(find.allPlayers())
         end
-    end)
-
-    -- Driver defense, because driver can be killed, except a bot health --
-    hook.add("EntityTakeDamage", "DriverDefense", function(target, _, _) 
-        if target == seat:getDriver() then return true end
     end)
 
 else
@@ -393,15 +376,15 @@ else
 
     net.receive("OnEnter", function()
         net.readEntity(function(ent) head = ent end)
-        timer.simple(1, function()
-            enableHud(player(), true)
+        timer.simple(0.1, function()
+            enableHud(nil, true)
             createHud()
         end)
     end)
 
     net.receive("OnLeave", function()
-        timer.simple(1, function()
-            enableHud(player(), false)
+        timer.simple(0.1, function()
+            enableHud(nil, false)
             removeHud()
         end)
     end)

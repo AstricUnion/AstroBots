@@ -4,17 +4,27 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
---@include astricunion/libs/guns.lua
 require("sounds")
 require("light")
--- require("guns")
-require("astricunion/libs/guns.lua")
+require("guns")
+
+
+---Initial health. Can be edited
+INITIAL_HEALTH = 6500
+
+---Initial speed. Can be edited
+INITIAL_SPEED = 200
+
+---Initial sprint. Can be edited
+INITIAL_SPRINT = 600
 
 
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
+    --@include astricunion/libs/astrobase.lua
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    require("astrobase")
+    -- require("astrobase")
+    require("astricunion/libs/astrobase.lua")
     require("ftimers")
 
     -- THIS FILE CREATES HOLOGRAMS --
@@ -26,9 +36,24 @@ if SERVER then
     local STATES = {
         NotInUse = -1,
         Idle = 1,
-        Attack = 3,
-        Laser = 2
+        Attack = 2,
+        Laser = 3,
+        Block = 4
     }
+
+    -- Berserk mode
+    local BERSERK_TIME = 0
+    local BERSERK_DAMAGE = 0
+    local BERSERK = {
+        DAMAGE = 1.5,
+        SPEED = 1.2,
+        RADIUS = 1.2
+    }
+    local function isBerserk()
+        return BERSERK_TIME > 0
+    end
+
+
 
     createLight("Main", body.base[1], Vector(0, 0, 30), 80, 10, Color(255, 0, 0))
     createLight("Underglow", body.base[1], Vector(0, 0, -40), 80, 10, Color(255, 0, 0))
@@ -39,7 +64,15 @@ if SERVER then
     local headsize = Vector(30, 30, 30)
     local body_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 10), Angle(), size, true)
     local head_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 60), Angle(), headsize, true)
-    local astro = AstroBase:new(STATES, body_hitbox, head_hitbox, seat, 1)
+    local astro = AstroBase:new(
+        STATES,
+        body_hitbox,
+        head_hitbox,
+        seat,
+        INITIAL_HEALTH,
+        INITIAL_SPEED,
+        INITIAL_SPRINT
+    )
 
     body.base[1]:setParent(body_hitbox)
     body.base[2]:setParent(body.base[1])
@@ -83,31 +116,24 @@ if SERVER then
         end,
         ["0-0.5"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(fraction)
-            body.base[1]:setLocalAngles(Angle(smoothed * 2, 0, 0))
-            body.head:setLocalAngles(Angle(smoothed * 3, 0, 0))
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 2))
+            body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 3))
         end,
         ["0.5-1"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(1 - fraction)
-            body.base[1]:setLocalAngles(Angle(smoothed * 2, 0, 0))
-            body.head:setLocalAngles(Angle(smoothed * 3, 0, 0))
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 2))
+            body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 3))
         end
     })
 
     -- Attack function
     local function attack()
-        local arm1ang
-        local arm2ang
-        local arm3ang
-        local baseang
-        IdleAnimation:pause()
+        local arm1ang = body.rightarm[1]:getLocalAngles()
+        local arm2ang = body.rightarm[2]:getLocalAngles()
+        local arm3ang = body.rightarm[3]:getLocalAngles()
+        local baseang = body.base[1]:getLocalAngles()
         astro:setState(STATES.Attack)
         FTimer:new(0.5, 1, {
-            [0] = function()
-                arm1ang = body.rightarm[1]:getLocalAngles()
-                arm2ang = body.rightarm[2]:getLocalAngles()
-                arm3ang = body.rightarm[3]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-            end,
             ["0-0.2"] = function(_, _, fraction)
                 local smoothed = math.easeOutCubic(fraction)
                 body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
@@ -146,7 +172,7 @@ if SERVER then
                         end
                         local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
                         if damagePermitted then
-                            ent:applyDamage(350, nil, nil, DAMAGE.CRUSH)
+                            ent:applyDamage(350 * (isBerserk() and BERSERK.DAMAGE or 1), nil, nil, DAMAGE.CRUSH)
                         end
                     end
                 end
@@ -159,7 +185,6 @@ if SERVER then
                 body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
             end,
             [1] = function()
-                IdleAnimation:start()
                 astro:setState(STATES.Idle)
             end
         })
@@ -167,19 +192,12 @@ if SERVER then
 
 
     local function altAttack()
-        local arm1ang
-        local arm2ang
-        local arm3ang
-        local baseang
-        IdleAnimation:pause()
+        local arm1ang = body.rightarm[1]:getLocalAngles()
+        local arm2ang = body.rightarm[2]:getLocalAngles()
+        local arm3ang = body.rightarm[3]:getLocalAngles()
+        local baseang = body.base[1]:getLocalAngles()
         astro:setState(STATES.Attack)
         FTimer:new(1, 1, {
-            [0] = function()
-                arm1ang = body.rightarm[1]:getLocalAngles()
-                arm2ang = body.rightarm[2]:getLocalAngles()
-                arm3ang = body.rightarm[3]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-            end,
             ["0-0.2"] = function(_, _, fraction)
                 local smoothed = math.easeOutCubic(fraction)
                 body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
@@ -199,29 +217,39 @@ if SERVER then
                 body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
             end,
             [1] = function()
-                IdleAnimation:start()
                 astro:setState(STATES.Idle)
             end
         })
     end
 
 
+    local LASER_CONTROL = false
+
     -- Laser animation
     local function laserOn()
+        local arm1ang = body.leftarm[1]:getLocalAngles()
         local arm2ang = body.leftarm.laser[1]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
-        IdleAnimation:pause()
         astro:setState(STATES.Laser)
         body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 800))
         FTimer:new(0.5, 1, {
             ["0-1"] = function(f, _, fraction)
                 if astro:getState() ~= STATES.Laser then f:remove() end
                 local smoothed = math.easeInOutCubic(fraction)
+                local res = astro:eyeTrace()
                 body.base[1]:setLocalAngles(baseang - (Angle(0, 30, -10) - baseang) * smoothed)
-                body.leftarm.laser[1]:setLocalAngles(arm2ang - arm2ang * smoothed)
+                body.leftarm[1]:setLocalAngles(
+                    arm1ang + (
+                        body.base[1]:worldToLocalAngles(
+                            (res.HitPos - body.leftarm[1]:getPos()):getAngle()
+                        ) - arm1ang
+                    ) * smoothed
+                )
+                body.leftarm.laser[1]:setLocalAngles(arm2ang - (arm2ang) * smoothed)
             end,
             [1] = function()
                 laser:start()
+                LASER_CONTROL = true
             end
         })
     end
@@ -231,23 +259,61 @@ if SERVER then
         local arm1ang = body.leftarm[1]:getLocalAngles()
         local arm2ang = body.leftarm.laser[1]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
-        astro:setState(STATES.Idle)
-        IdleAnimation:pause()
         laser:stop()
         body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
-        FTimer:new(0.5, 1, {
-            ["0-1"] = function(_, _, fraction)
+        astro:setState(STATES.Idle)
+        FTimer:new(0.75, 1, {
+            ["0.3-1"] = function(f, _, fraction)
+                if astro:getState() ~= STATES.Idle then f:remove() end
                 local smoothed = math.easeInOutCubic(fraction)
                 body.base[1]:setLocalAngles(baseang - baseang * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
                 body.leftarm[1]:setLocalAngles(arm1ang + (Angle(40, 120, 120) - arm1ang) * smoothed)
             end,
             [1] = function()
-                IdleAnimation:start()
+                LASER_CONTROL = false
             end
         })
     end
 
+
+    local function armBlock()
+        local leftarm1ang = body.leftarm[1]:getLocalAngles()
+        local leftarm2ang = body.leftarm.laser[1]:getLocalAngles()
+        local rightarm1ang = body.rightarm[1]:getLocalAngles()
+        local rightarm2ang = body.rightarm[2]:getLocalAngles()
+        local rightarm3ang = body.rightarm[3]:getLocalAngles()
+        astro:setState(STATES.Block)
+        FTimer:new(0.35, 1, {
+            ["0-1"] = function(_, _, fraction)
+                local smoothed = math.easeInOutCubic(fraction)
+                body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(0, -20, 60) - leftarm1ang) * smoothed)
+                body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-80, 0, 0) - leftarm2ang) * smoothed)
+                body.rightarm[1]:setLocalAngles(rightarm1ang + (Angle(0, 20, -60) - rightarm1ang) * smoothed)
+                body.rightarm[2]:setLocalAngles(rightarm2ang + (Angle(-40, 0, 0) - rightarm2ang) * smoothed)
+                body.rightarm[3]:setLocalAngles(rightarm3ang + (Angle(-20, 0, 180) - rightarm3ang) * smoothed)
+            end,
+        })
+    end
+
+    local function armUnblock()
+        local leftarm1ang = body.leftarm[1]:getLocalAngles()
+        local leftarm2ang = body.leftarm.laser[1]:getLocalAngles()
+        local rightarm1ang = body.rightarm[1]:getLocalAngles()
+        local rightarm2ang = body.rightarm[2]:getLocalAngles()
+        local rightarm3ang = body.rightarm[3]:getLocalAngles()
+        FTimer:new(0.5, 1, {
+            ["0-1"] = function(_, _, fraction)
+                local smoothed = math.easeInOutCubic(fraction)
+                body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(40, 120, 120) - leftarm1ang) * smoothed)
+                body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-100, 0, 0) - leftarm2ang) * smoothed)
+                body.rightarm[1]:setLocalAngles(rightarm1ang + (Angle(40, -120, -120) - rightarm1ang) * smoothed)
+                body.rightarm[2]:setLocalAngles(rightarm2ang + (Angle(-100, 0, 0) - rightarm2ang) * smoothed)
+                body.rightarm[3]:setLocalAngles(rightarm3ang + (Angle(0, 10, 90) - rightarm3ang) * smoothed)
+            end,
+            [1] = function() astro:setState(STATES.Idle) end
+        })
+    end
 
     local function syncLaser()
         local dr = seat:getDriver()
@@ -258,22 +324,14 @@ if SERVER then
         end
     end
 
-    timer.create("increaseLaser", 0, 0, function()
-        if astro:getState() ~= STATES.Laser then
-            laser:increaseCharge(0.016)
-            syncLaser()
-        end
-    end)
-
-
     -- Movement think --
     hook.add("Think", "Movement", function()
         astro:think(function()
-            if astro:getState() == STATES.Laser then
+            if astro:getState() == STATES.Laser and LASER_CONTROL then
                 local res = astro:eyeTrace()
                 body.leftarm[1]:setAngles(
                     math.lerpAngle(
-                        0.2,
+                        0.5,
                         body.leftarm[1]:getAngles(),
                         (res.HitPos - body.leftarm[1]:getPos()):getAngle()
                     )
@@ -281,49 +339,54 @@ if SERVER then
                 laser:decreaseCharge(0.16 * game.getTickInterval(), function()
                     laserOff()
                 end)
-                syncLaser()
                 laser:think()
+            else
+                laser:increaseCharge(0.16 * game.getTickInterval())
             end
+            syncLaser()
         end)
     end)
 
 
-    hook.add("KeyPress", "", function(ply, key)
-        if ply == seat:getDriver() then
-            if astro:getState() == STATES.Idle then
-                if key == IN_KEY.ATTACK then
-                    attack()
-                elseif key == IN_KEY.ATTACK2 then
-                    altAttack()
-                elseif key == IN_KEY.RELOAD then
-                    laserOn()
-                end
+    net.receive("pressed", function()
+        local key = net.readInt(32)
+        if astro:getState() == STATES.Idle then
+            if key == MOUSE.MOUSE1 then
+                attack()
+            elseif key == MOUSE.MOUSE2 then
+                altAttack()
+            elseif key == KEY.R then
+                laserOn()
+            elseif key == MOUSE.MOUSE3 then
+                armBlock()
             end
         end
     end)
 
-
-    hook.add("KeyRelease", "", function(ply, key)
-        if ply == seat:getDriver() then
-            if key == IN_KEY.RELOAD and astro:getState() == STATES.Laser then
-                laserOff()
-            end
+    net.receive("released", function()
+        local key = net.readInt(32)
+        local st = astro:getState()
+        if key == KEY.R and st == STATES.Laser then
+            laserOff()
+        elseif key == MOUSE.MOUSE3 then
+            armUnblock()
         end
-    end)
-
-
-    -- On enter and leave --
-    hook.add("PlayerEnteredVehicle", "", function(ply, vehicle) astro:enter(ply, vehicle) end)
-    hook.add("PlayerLeaveVehicle", "", function(ply, vehicle) astro:leave(ply, vehicle) end)
-
-    -- Driver defense, because driver can be killed, except a bot health --
-    hook.add("EntityTakeDamage", "DriverDefense", function(target, _, _) 
-        if target == seat:getDriver() then return true end
     end)
 
     -- Health --
     hook.add("EntityTakeDamage", "health", function(target, _, _, amount)
         if target == astro.body or target == astro.head then
+            local state = astro:getState()
+            if BERSERK_TIME == 0 and BERSERK_DAMAGE < 3200 then
+                BERSERK_DAMAGE = math.clamp(
+                    BERSERK_DAMAGE
+                      + amount
+                      * (state == STATES.Block and 1.2 or 1),
+                    0,
+                    3200
+                )
+            end
+            amount = amount * (state == STATES.Block and 0.6 or 1)
             astro:damage(amount, function()
                 -- Remove hooks
                 hook.remove("KeyPress", "")
@@ -349,17 +412,6 @@ if SERVER then
             net.send(find.allPlayers())
         end
     end)
-
-    -- On chip remove --
-    hook.add("Removed", "", function()
-        if seat and isValid(seat) then
-            local driver = seat:getDriver()
-            if isValid(driver) then
-                driver:setColor(Color(255, 255, 255, 255))
-            end
-        end
-    end)
-
 else
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
     require("ui")
@@ -371,7 +423,7 @@ else
     ---@type Bar
     local healthBar
     ---@type number
-    local astroHealth = 6500
+    local astroHealth = INITIAL_HEALTH
 
 
     local function createHud()
@@ -407,23 +459,39 @@ else
                 fov = 120
             }
         end)
+
+        hook.add("InputPressed", "", function(key)
+            if input.getCursorVisible() then return end
+            net.start("pressed")
+            net.writeInt(key, 32)
+            net.send()
+        end)
+
+        hook.add("InputReleased", "", function(key)
+            if input.getCursorVisible() then return end
+            net.start("released")
+            net.writeInt(key, 32)
+            net.send()
+        end)
     end
 
     local function removeHud()
         hook.remove("DrawHUD", "")
         hook.remove("CalcView", "")
+        hook.remove("InputPressed", "")
+        hook.remove("InputReleased", "")
     end
 
     net.receive("OnEnter", function()
         net.readEntity(function(ent) head = ent end)
-        timer.simple(1, function()
+        timer.simple(0.1, function()
             enableHud(nil, true)
             createHud()
         end)
     end)
 
     net.receive("OnLeave", function()
-        timer.simple(1, function()
+        timer.simple(0.1, function()
             enableHud(nil, false)
             removeHud()
         end)
