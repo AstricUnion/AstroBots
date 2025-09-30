@@ -9,22 +9,38 @@ require("light")
 require("guns")
 
 
----Initial health. Can be edited
-INITIAL_HEALTH = 6500
+do
+    ---Initial health. Can be edited
+    INITIAL_HEALTH = 6500
 
----Initial speed. Can be edited
-INITIAL_SPEED = 200
+    ---Initial speed. Can be edited
+    INITIAL_SPEED = 200
 
----Initial sprint. Can be edited
-INITIAL_SPRINT = 600
+    ---Initial sprint. Can be edited
+    INITIAL_SPRINT = 600
+
+    ---Initial laser damage. Can be edited
+    INITIAL_LASER_DAMAGE = 5
+
+    ---Initial laser radius. Can be edited
+    INITIAL_LASER_RADIUS = 7.5
+
+    ---Initial punch damage. Can be edited
+    INITIAL_PUNCH_DAMAGE = 350
+
+    ---Initial claws damage. Can be edited
+    INITIAL_CLAWS_DAMAGE = 600
+
+    ---Initial dash claws damage. Can be edited
+    INITIAL_DASH_CLAWS_DAMAGE = INITIAL_CLAWS_DAMAGE * 2
+end
+
 
 
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
-    --@include astricunion/libs/astrobase.lua
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    -- require("astrobase")
-    require("astricunion/libs/astrobase.lua")
+    require("astrobase")
     require("ftimers")
 
     -- THIS FILE CREATES HOLOGRAMS --
@@ -52,7 +68,6 @@ if SERVER then
     local function isBerserk()
         return BERSERK_TIME > 0
     end
-
 
 
     createLight("Main", body.base[1], Vector(0, 0, 30), 80, 10, Color(255, 0, 0))
@@ -97,7 +112,11 @@ if SERVER then
     body.rightarm[3]:setLocalAngles(Angle(0, 10, 90))
 
 
-    local laser = Laser:new(body.leftarm.laser[2], 14)
+    local laser = Laser:new(body.leftarm.laser[2], 14, INITIAL_LASER_DAMAGE, INITIAL_LASER_RADIUS)
+    if !laser then
+        throw("Oops, something is wrong. Please, copy output from console and send it to issues")
+        return
+    end
 
     -- Idle animation
     local base_pos
@@ -133,13 +152,12 @@ if SERVER then
         local arm3ang = body.rightarm[3]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
         astro:setState(STATES.Attack)
-        FTimer:new(0.5, 1, {
-            ["0-0.2"] = function(_, _, fraction)
-                local smoothed = math.easeOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
+        FTimer:new(0.75, 1, {
+            ["0-0.3"] = function(_, _, fraction)
+                local smoothed = math.easeOutQuint(fraction) body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
             end,
-            ["0.2-0.5"] = function(_, _, fraction)
-                local smoothed = math.easeInOutCubic(fraction)
+            ["0.3-0.6"] = function(_, _, fraction)
+                local smoothed = math.easeOutQuint(fraction)
                 body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
                 body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
                 body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
@@ -148,15 +166,16 @@ if SERVER then
                 local armForward = body.rightarm[3]:getForward()
                 local armUp = body.rightarm[3]:getUp()
                 local armRight = body.rightarm[3]:getRight()
+                local radius = 60 * (isBerserk() and BERSERK.RADIUS or 1)
                 local entsToDamage = find.inBox(
                     armPos - (
-                        armUp * 80
-                        + armRight * 80
+                        armUp * radius
+                        + armRight * radius
                     ),
                     armPos + (
-                        armUp * 80
-                        + armRight * 80
-                        + armForward * 80
+                        armUp * radius
+                        + armRight * radius
+                        + armForward * radius
                     )
                 )
                 for _, ent in ipairs(entsToDamage) do
@@ -172,7 +191,13 @@ if SERVER then
                         end
                         local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
                         if damagePermitted then
-                            ent:applyDamage(350 * (isBerserk() and BERSERK.DAMAGE or 1), nil, nil, DAMAGE.CRUSH)
+                            ent:applyDamage(
+                                INITIAL_PUNCH_DAMAGE *
+                                (isBerserk() and BERSERK.DAMAGE or 1),
+                                nil,
+                                nil,
+                                DAMAGE.CRUSH
+                            )
                         end
                     end
                 end
@@ -286,7 +311,7 @@ if SERVER then
         astro:setState(STATES.Block)
         FTimer:new(0.35, 1, {
             ["0-1"] = function(_, _, fraction)
-                local smoothed = math.easeInOutCubic(fraction)
+                local smoothed = math.easeInOutSine(fraction)
                 body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(0, -20, 60) - leftarm1ang) * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-80, 0, 0) - leftarm2ang) * smoothed)
                 body.rightarm[1]:setLocalAngles(rightarm1ang + (Angle(0, 20, -60) - rightarm1ang) * smoothed)
@@ -304,7 +329,7 @@ if SERVER then
         local rightarm3ang = body.rightarm[3]:getLocalAngles()
         FTimer:new(0.5, 1, {
             ["0-1"] = function(_, _, fraction)
-                local smoothed = math.easeInOutCubic(fraction)
+                local smoothed = math.easeInOutSine(fraction)
                 body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(40, 120, 120) - leftarm1ang) * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-100, 0, 0) - leftarm2ang) * smoothed)
                 body.rightarm[1]:setLocalAngles(rightarm1ang + (Angle(40, -120, -120) - rightarm1ang) * smoothed)
@@ -315,8 +340,7 @@ if SERVER then
         })
     end
 
-    local function syncLaser()
-        local dr = seat:getDriver()
+    local function syncLaser(dr)
         if isValid(dr) then
             net.start("LaserChargeUpdate")
             net.writeFloat(laser:getCharge())
@@ -326,9 +350,10 @@ if SERVER then
 
     -- Movement think --
     hook.add("Think", "Movement", function()
-        astro:think(function()
+        astro:think(function(dr)
             if astro:getState() == STATES.Laser and LASER_CONTROL then
                 local res = astro:eyeTrace()
+                if !res then return end
                 body.leftarm[1]:setAngles(
                     math.lerpAngle(
                         0.5,
@@ -336,14 +361,16 @@ if SERVER then
                         (res.HitPos - body.leftarm[1]:getPos()):getAngle()
                     )
                 )
-                laser:decreaseCharge(0.16 * game.getTickInterval(), function()
-                    laserOff()
-                end)
+                if !isBerserk() then
+                    laser:decreaseCharge(0.16 * game.getTickInterval(), function()
+                        laserOff()
+                    end)
+                end
                 laser:think()
             else
                 laser:increaseCharge(0.16 * game.getTickInterval())
             end
-            syncLaser()
+            syncLaser(dr)
         end)
     end)
 
@@ -351,12 +378,21 @@ if SERVER then
     net.receive("pressed", function()
         local key = net.readInt(32)
         if astro:getState() == STATES.Idle then
+            -- Weak punch: MOUSE1
             if key == MOUSE.MOUSE1 then
                 attack()
+            -- Punch with claws: MOUSE2
             elseif key == MOUSE.MOUSE2 then
                 altAttack()
+            -- Laser: R
             elseif key == KEY.R then
                 laserOn()
+            -- Berserk: F
+            elseif key == KEY.F then
+                BERSERK_TIME = 1
+                laser:setDamage(INITIAL_LASER_DAMAGE * BERSERK.DAMAGE)
+                laser:setDamageRadius(INITIAL_LASER_RADIUS * BERSERK.RADIUS)
+            -- Block: MOUSE WHEEL
             elseif key == MOUSE.MOUSE3 then
                 armBlock()
             end

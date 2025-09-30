@@ -66,6 +66,7 @@ if SERVER then
     }
     blaster.left:addIgnore(blaster.right.hitbox)
     blaster.right:addIgnore(blaster.left.hitbox)
+    ignore = {blaster.left.hitbox, blaster.right.hitbox}
 
 
     -- Parenting --
@@ -87,14 +88,14 @@ if SERVER then
     local base_pos = body.base[1]:getLocalPos()
     local head_pos = body.head:getLocalPos()
     local idle = FTimer:new(4, -1, {
-        ["0-0.5"] = function(t, fraction, relative)
-            local smoothed = math.easeInOutSine(relative)
+        ["0-0.5"] = function(_, _, fraction)
+            local smoothed = math.easeInOutSine(fraction)
             body.base[1]:setLocalPos(base_pos + Vector(0, 0, 2 * smoothed))
             body.head:setLocalPos(head_pos + Vector(-2 * smoothed, 0, 3 * smoothed))
             body.head:setLocalAngles(Angle(-4 * smoothed, 0, 0))
         end,
-        ["0.5-1"] = function(t, fraction, relative)
-            local smoothed = math.easeInOutSine(1 - relative)
+        ["0.5-1"] = function(_, _, fraction)
+            local smoothed = math.easeInOutSine(1 - fraction)
             body.base[1]:setLocalPos(base_pos + Vector(0, 0, 2 * smoothed))
             body.head:setLocalPos(head_pos + Vector(-2 * smoothed, 0, 3 * smoothed))
             body.head:setLocalAngles(Angle(-4 * smoothed, 0, 0))
@@ -112,7 +113,7 @@ if SERVER then
     -- Movement hook. There is all movement (blaster rotation, astro.head rotation, movement object think) --
     hook.add("Think", "Movement", function()
         astro:think(function()
-            local eyeTrace = astro:eyeTrace()
+            local eyeTrace = astro:eyeTrace(ignore)
             if not eyeTrace then return end
             if astro.state == STATES.Idle then
                 if blaster.left:isAlive() then
