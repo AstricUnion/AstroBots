@@ -285,11 +285,10 @@ if SERVER then
         local arm2ang = body.leftarm.laser[1]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
         laser:stop()
-        body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
         astro:setState(STATES.Idle)
+        body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
         FTimer:new(0.75, 1, {
-            ["0.3-1"] = function(f, _, fraction)
-                if astro:getState() ~= STATES.Idle then f:remove() end
+            ["0.3-1"] = function(_, _, fraction)
                 local smoothed = math.easeInOutCubic(fraction)
                 body.base[1]:setLocalAngles(baseang - baseang * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
@@ -310,8 +309,9 @@ if SERVER then
         local rightarm3ang = body.rightarm[3]:getLocalAngles()
         astro:setState(STATES.Block)
         FTimer:new(0.35, 1, {
-            ["0-1"] = function(_, _, fraction)
-                local smoothed = math.easeInOutSine(fraction)
+            ["0-1"] = function(f, _, fraction)
+                if astro:getState() ~= STATES.Block then f:remove() end
+                local smoothed = math.easeInOutExpo(fraction)
                 body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(0, -20, 60) - leftarm1ang) * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-80, 0, 0) - leftarm2ang) * smoothed)
                 body.rightarm[1]:setLocalAngles(rightarm1ang + (Angle(0, 20, -60) - rightarm1ang) * smoothed)
@@ -328,8 +328,9 @@ if SERVER then
         local rightarm2ang = body.rightarm[2]:getLocalAngles()
         local rightarm3ang = body.rightarm[3]:getLocalAngles()
         FTimer:new(0.5, 1, {
-            ["0-1"] = function(_, _, fraction)
-                local smoothed = math.easeInOutSine(fraction)
+            ["0-1"] = function(f, _, fraction)
+                if astro:getState() ~= STATES.Block then f:remove() end
+                local smoothed = math.easeInOutExpo(fraction)
                 body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(40, 120, 120) - leftarm1ang) * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-100, 0, 0) - leftarm2ang) * smoothed)
                 body.rightarm[1]:setLocalAngles(rightarm1ang + (Angle(40, -120, -120) - rightarm1ang) * smoothed)
@@ -377,7 +378,7 @@ if SERVER then
 
     net.receive("pressed", function()
         local key = net.readInt(32)
-        if astro:getState() == STATES.Idle then
+        if astro:getState() == STATES.Idle and !LASER_CONTROL then
             -- Weak punch: MOUSE1
             if key == MOUSE.MOUSE1 then
                 attack()
