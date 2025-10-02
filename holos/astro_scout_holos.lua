@@ -137,21 +137,7 @@ body = {
                 prong(180),
                 prong(-90)
             )
-        },
-        --[[
-        hologram.createPart(
-            Holo(SubHolo(Vector(-3,253,24))),
-            Holo(SubHolo(Vector(-3,260,24),Angle(260,90,180),"models/props_combine/combine_booth_short01a.mdl",Vector(0.2,0.34,0.4),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(-3,260,24),Angle(-280,90,0),"models/props_combine/combine_booth_short01a.mdl",Vector(0.2,0.34,0.4),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(-16,305,22),Angle(10,-90,0),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,2),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(-3,305,22),Angle(10,-90,0),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,2),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(11,305,22),Angle(10,-90,0),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,2),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(-16,295,4),Angle(80,-90,0),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,1.6),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(-3,295,4),Angle(80,-90,0),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,1.6),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(11,295,4),Angle(80,-90,0),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,1.6),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(30,270,24),Angle(0,-20,70),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,2),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
-            Holo(SubHolo(Vector(30,295,18),Angle(0,25,90),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,1.5),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
-        )]]
+        }
     }
 }
 

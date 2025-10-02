@@ -262,7 +262,7 @@ if SERVER then
     end
 
 
-    hook.add("EntityTakeDamage", "health", function(target, _, _, amount)
+    hook.add("PostEntityTakeDamage", "health", function(target, _, _, amount)
         if target == blaster.left.hitbox then
             blaster.left:damage(amount)
             blasterHealthUpdate(true, blaster.left.health)

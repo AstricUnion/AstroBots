@@ -54,7 +54,8 @@ if SERVER then
         Idle = 1,
         Attack = 2,
         Laser = 3,
-        Block = 4
+        Block = 4,
+        Dash = 5
     }
 
     -- Berserk mode
@@ -145,6 +146,27 @@ if SERVER then
         end
     })
 
+    local function attackDamage(min, max, direction, damage)
+        local entsToDamage = find.inBox(min, max)
+        for _, ent in ipairs(entsToDamage) do
+            if ent == astro.body then continue end
+            if isValid(ent) then
+                local velocityPermitted, _ = hasPermission("entities.setVelocity", ent)
+                if velocityPermitted and game.getTickCount() % 2 == 0 then
+                    if !ent:isNPC() and ent:isValidPhys() then
+                        ent:getPhysicsObject():setVelocity(direction * 1000)
+                    elseif ent:isNPC() then
+                        ent:setVelocity(direction * 1000)
+                    end
+                end
+                local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
+                if damagePermitted then
+                    ent:applyDamage(damage, nil, nil, DAMAGE.CRUSH)
+                end
+            end
+        end
+    end
+
     -- Attack function
     local function attack()
         local arm1ang = body.rightarm[1]:getLocalAngles()
@@ -152,7 +174,7 @@ if SERVER then
         local arm3ang = body.rightarm[3]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
         astro:setState(STATES.Attack)
-        FTimer:new(0.75, 1, {
+        FTimer:new(0.5, 1, {
             ["0-0.3"] = function(_, _, fraction)
                 local smoothed = math.easeOutQuint(fraction) body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
             end,
@@ -166,41 +188,13 @@ if SERVER then
                 local armForward = body.rightarm[3]:getForward()
                 local armUp = body.rightarm[3]:getUp()
                 local armRight = body.rightarm[3]:getRight()
-                local radius = 60 * (isBerserk() and BERSERK.RADIUS or 1)
-                local entsToDamage = find.inBox(
-                    armPos - (
-                        armUp * radius
-                        + armRight * radius
-                    ),
-                    armPos + (
-                        armUp * radius
-                        + armRight * radius
-                        + armForward * radius
-                    )
+                local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
+                attackDamage(
+                    armPos - (armUp + armRight) * radius,
+                    armPos + (armUp + armRight + armForward) * radius,
+                    armForward,
+                    INITIAL_PUNCH_DAMAGE * (isBerserk() and BERSERK.DAMAGE or 1)
                 )
-                for _, ent in ipairs(entsToDamage) do
-                    if ent == astro.body then continue end
-                    if isValid(ent) then
-                        local velocityPermitted, _ = hasPermission("entities.setVelocity", ent)
-                        if velocityPermitted and game.getTickCount() % 2 == 0 then
-                            if !ent:isNPC() and ent:isValidPhys() then
-                                ent:getPhysicsObject():setVelocity(armForward * 1000)
-                            elseif ent:isNPC() then
-                                ent:setVelocity(armForward * 1000)
-                            end
-                        end
-                        local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
-                        if damagePermitted then
-                            ent:applyDamage(
-                                INITIAL_PUNCH_DAMAGE *
-                                (isBerserk() and BERSERK.DAMAGE or 1),
-                                nil,
-                                nil,
-                                DAMAGE.CRUSH
-                            )
-                        end
-                    end
-                end
             end,
             ["0.7-1"] = function(_, _, fraction)
                 local smoothed = math.easeInCubic(1 - fraction)
@@ -216,31 +210,71 @@ if SERVER then
     end
 
 
-    local function altAttack()
-        local arm1ang = body.rightarm[1]:getLocalAngles()
-        local arm2ang = body.rightarm[2]:getLocalAngles()
-        local arm3ang = body.rightarm[3]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
+    local function clawsAttackSwing()
+        local arm1ang
+        local arm2ang
+        local baseang
+        return function(_, _, fraction)
+            if math.floor(fraction * 10) == 0 then
+                arm1ang = body.rightarm[1]:getLocalAngles()
+                arm2ang = body.rightarm[2]:getLocalAngles()
+                baseang = body.base[1]:getLocalAngles()
+            end
+            local smoothed = math.easeOutCubic(fraction)
+            body.base[1]:setLocalAngles(baseang + (Angle(0, -80, 0) - baseang) * smoothed)
+            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(-50, -80, 0) - arm1ang) * smoothed)
+            body.rightarm[2]:setLocalAngles(arm2ang + (- arm2ang) * smoothed)
+        end
+    end
+
+    local function clawsAttackPunch(damage)
+        local arm1ang
+        local baseang
+        return function(_, _, fraction)
+            if math.floor(fraction * 10) == 0 then
+                arm1ang = body.rightarm[1]:getLocalAngles()
+                baseang = body.base[1]:getLocalAngles()
+            end
+            local smoothed = math.easeOutCubic(fraction)
+            body.base[1]:setLocalAngles(baseang + (Angle(0, 60, -5) - baseang) * smoothed)
+            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(20, 20, 0) - arm1ang) * smoothed)
+            local armPos = body.rightarm[3]:getPos()
+            local armForward = body.rightarm[3]:getForward()
+            local armUp = body.rightarm[3]:getUp()
+            local armRight = body.rightarm[3]:getRight()
+            local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
+            attackDamage(
+                armPos - (armUp + armRight) * radius,
+                armPos + (armUp + armRight + armForward) * radius,
+                armForward,
+                damage * (isBerserk() and BERSERK.DAMAGE or 1)
+            )
+        end
+    end
+
+    local function clawsAttackReturn()
+        local arm1ang
+        local arm2ang
+        local baseang
+        return function(_, _, fraction)
+            if math.floor(fraction * 10) == 0 then
+                arm1ang = body.rightarm[1]:getLocalAngles()
+                arm2ang = body.rightarm[2]:getLocalAngles()
+                baseang = body.base[1]:getLocalAngles()
+            end
+            local smoothed = math.easeInOutQuad(fraction)
+            body.base[1]:setLocalAngles(baseang + (- baseang) * smoothed)
+            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(40, -120, -120) - arm1ang) * smoothed)
+            body.rightarm[2]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
+        end
+    end
+
+    local function clawsAttack()
         astro:setState(STATES.Attack)
         FTimer:new(1, 1, {
-            ["0-0.2"] = function(_, _, fraction)
-                local smoothed = math.easeOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
-            end,
-            ["0.2-0.6"] = function(_, _, fraction)
-                local smoothed = math.easeInOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
-                body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
-                body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
-            end,
-            ["0.7-1"] = function(_, _, fraction)
-                local smoothed = math.easeInCubic(1 - fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
-                body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
-                body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
-            end,
+            ["0-0.4"] = clawsAttackSwing(),
+            ["0.4-0.5"] = clawsAttackPunch(INITIAL_CLAWS_DAMAGE),
+            ["0.6-1"] = clawsAttackReturn(),
             [1] = function()
                 astro:setState(STATES.Idle)
             end
@@ -341,6 +375,65 @@ if SERVER then
         })
     end
 
+
+    local CAN_DASH = true
+    local function dash()
+        if !CAN_DASH then return end
+        CAN_DASH = false
+        astro:setState(STATES.Dash)
+        local velocity = 30000
+        local direction = astro:getDirection()
+        if !direction then return end
+        direction = direction:isZero() and astro.body:getForward() or direction
+        FTimer:new(2.25, 1, {
+            ["0-0.2"] = clawsAttackSwing(),
+            ["0.2-1"] = function(f)
+                velocity = math.lerp(0.1, velocity, 0)
+                astro.body:addVelocity(direction * velocity)
+                local pos = astro.body:getPos()
+                local up = astro.body:getUp()
+                local right = astro.body:getRight()
+                local forward = astro.body:getForward()
+                local entsToDamage = find.inBox(
+                    pos - ((up / 3) + right - forward) * 40,
+                    pos + ((forward * 10) + (up / 3) + right) * 40
+                )
+                for _, ent in ipairs(entsToDamage) do
+                    if ent == astro.body
+                    or ent == astro.head
+                    or ent == astro.driver
+                    or ent == astro.seat then
+                        continue
+                    end
+                    if isValid(ent) and isValid(ent:getPhysicsObject()) then
+                        f:remove()
+                        astro:setState(STATES.Attack)
+                        FTimer:new(1, 1, {
+                            ["0-0.1"] = clawsAttackPunch(INITIAL_DASH_CLAWS_DAMAGE),
+                            ["0.1-0.6"] = clawsAttackReturn(),
+                            [0.625] = function(f)
+                                astro:setState(STATES.Idle)
+                                f:remove()
+                            end
+                        })
+                        return
+                    end
+                end
+            end,
+            [1] = function()
+                FTimer:new(0.3, 1, {
+                    ["0-1"] = clawsAttackReturn(),
+                    [0.9375] = function()
+                        astro:setState(STATES.Idle)
+                    end
+                })
+            end
+        })
+        timer.simple(5.25, function()
+            CAN_DASH = true
+        end)
+    end
+
     local function syncLaser(dr)
         if isValid(dr) then
             net.start("LaserChargeUpdate")
@@ -384,18 +477,22 @@ if SERVER then
                 attack()
             -- Punch with claws: MOUSE2
             elseif key == MOUSE.MOUSE2 then
-                altAttack()
+                clawsAttack()
             -- Laser: R
             elseif key == KEY.R then
                 laserOn()
             -- Berserk: F
             elseif key == KEY.F then
-                BERSERK_TIME = 1
+                BERSERK_TIME = 12
+                BERSERK_DAMAGE = 0
                 laser:setDamage(INITIAL_LASER_DAMAGE * BERSERK.DAMAGE)
                 laser:setDamageRadius(INITIAL_LASER_RADIUS * BERSERK.RADIUS)
             -- Block: MOUSE WHEEL
             elseif key == MOUSE.MOUSE3 then
                 armBlock()
+            -- Dash: G
+            elseif key == KEY.G then
+                dash()
             end
         end
     end)
@@ -410,8 +507,20 @@ if SERVER then
         end
     end)
 
+
+    timer.create("BerserkDecrease", 0.1, 0, function()
+        if BERSERK_TIME == 0 then return end
+        BERSERK_TIME = BERSERK_TIME - 0.1
+        print(BERSERK_TIME)
+        if BERSERK_TIME <= 0 then
+            laser:setDamage(INITIAL_LASER_DAMAGE)
+            laser:setDamageRadius(INITIAL_LASER_RADIUS)
+            BERSERK_TIME = 0
+        end
+    end)
+
     -- Health --
-    hook.add("EntityTakeDamage", "health", function(target, _, _, amount)
+    hook.add("PostEntityTakeDamage", "Health", function(target, _, _, amount)
         if target == astro.body or target == astro.head then
             local state = astro:getState()
             if BERSERK_TIME == 0 and BERSERK_DAMAGE < 3200 then
@@ -426,11 +535,9 @@ if SERVER then
             amount = amount * (state == STATES.Block and 0.6 or 1)
             astro:damage(amount, function()
                 -- Remove hooks
-                hook.remove("KeyPress", "")
-                hook.remove("KeyRelease", "")
+                hook.remove("EntityTakeDamage", "DriverDefense")
                 hook.remove("Think", "Movement")
                 hook.remove("EntityTakeDamage", "health")
-                hook.remove("EntityTakeDamage", "DriverDefense")
                 timer.remove("increaseLaser")
 
                 -- Remove animation
@@ -461,6 +568,10 @@ else
     local healthBar
     ---@type number
     local astroHealth = INITIAL_HEALTH
+    ---@type number
+    local laserCharge = 1
+    ---@type number
+    local berserkCharge = 0
 
 
     local function createHud()
@@ -475,7 +586,9 @@ else
                 laserBar = Bar:new(sw * 0.1, sh * 0.8, 200, 30, 1)
                     :setLabelLeft("LASER")
             end
-            laserBar:setLabelRight(tostring(math.round(laserBar.current_percent * 100)) .. "%"):draw()
+            laserBar:setLabelRight(tostring(math.round(laserBar.current_percent * 100)) .. "%")
+                :setPercent(laserCharge)
+                :draw()
 
             ---- HP ----
             if !healthBar then
@@ -540,9 +653,10 @@ else
 
     net.receive("LaserChargeUpdate", function()
         local percent = net.readFloat()
-        if laserBar then
-            laserBar:setPercent(percent)
-        end
+        laserCharge = percent
+    end)
+
+    net.receive("BerserkStatusUpdate", function()
     end)
 end
 
