@@ -2,10 +2,10 @@
 There are our main projects and holograms
 ## AstroTrooper
 Small and accurate, very useful in closed area
-![AstroTrooper in-game](https://github.com/AstricUnion/AstroBots/blob/main/assets/astrotrooper.png?raw=true)
+![AstroTrooper in-game](https://github.com/AstricUnion/AstroBots/blob/main/assets/astrotrooper.jpg?raw=true)
 
 ## AstroScout (WIP)
-Coming soon...
+![AstroScout in-game](https://github.com/AstricUnion/AstroBots/blob/main/assets/astroscout.jpg?raw=true)
 
 ## AstroStriker (WIP)
 Coming soon...
