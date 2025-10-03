@@ -522,7 +522,6 @@ if SERVER then
         net.start("BerserkStatusUpdate")
         net.writeInt(math.round((BERSERK_TIME / 12) * 100), 8)
         net.send(find.allPlayers())
-        print(BERSERK_TIME)
         if BERSERK_TIME <= 0 then
             laser:setDamage(INITIAL_LASER_DAMAGE)
             laser:setDamageRadius(INITIAL_LASER_RADIUS)

@@ -4,7 +4,6 @@
 
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
-require("sounds")
 require("light")
 
 
@@ -14,6 +13,7 @@ if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
 
+    local astrosounds = require("sounds")
     require("guns")
     require("ftimers")
     require("astrobase")
@@ -39,16 +39,17 @@ if SERVER then
 
 
     -- Preload sounds
-    preloadSounds(
-        Sound("start", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/hquaypds6coht7j62n7vr/reload0.mp3?rlkey=yg1jais8pt13hnocxt8c6wpo6&st=w8dcgloo&dl=1"),
-        Sound("loop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/u61ky5sum5em1z0h9q98s/Energy4.wav?rlkey=pyg5cfqx3y10hhuqjxrrb14hh&st=b1v8aa6z&dl=1"),
-        Sound("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
-        Sound("reloadLeft", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
-        Sound("reloadRight", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
-        Sound("blasterLeft", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/fpgejktwdlxjz9nyj7sj4/Blast1.mp3?rlkey=c7h1wy6qu3iy1xa67dan8zte5&st=ru9p1w1b&dl=1"),
-        Sound("blasterRight", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/6q9lpjvt1sru65geweh4q/Blast2.mp3?rlkey=ui22nfydim0bur570at8mdwxg&st=1oj88xy4&dl=1")
-    )
-
+    hook.add("ClientInitialized", "Sounds", function(ply)
+        astrosounds.preload(
+            ply,
+            Sound:new("loop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/u61ky5sum5em1z0h9q98s/Energy4.wav?rlkey=pyg5cfqx3y10hhuqjxrrb14hh&st=b1v8aa6z&dl=1"),
+            Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
+            Sound:new("reloadLeft", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
+            Sound:new("reloadRight", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
+            Sound:new("blasterLeft", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/fpgejktwdlxjz9nyj7sj4/Blast1.mp3?rlkey=c7h1wy6qu3iy1xa67dan8zte5&st=ru9p1w1b&dl=1"),
+            Sound:new("blasterRight", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/6q9lpjvt1sru65geweh4q/Blast2.mp3?rlkey=ui22nfydim0bur570at8mdwxg&st=1oj88xy4&dl=1")
+        )
+    end)
 
     -- Create bot parts --
     local seat = prop.createSeat(chip():getPos() + Vector(0, 0, -6), Angle(), "models/nova/airboat_seat.mdl")
@@ -115,9 +116,9 @@ if SERVER then
 
 
     -- Start sound --
-    timer.simple(4, function()
-        playSound("start", astro.body:getPos())
-        playSound("loop", Vector(), astro.body)
+    hook.add("SoundPreloaded", "StartSound", function(name, ply)
+        if name ~= "loop" then return end
+        astrosounds.play("loop", Vector(), astro.body, ply)
     end)
 
 
@@ -152,12 +153,12 @@ if SERVER then
         blaster.left:shoot(
             -- Shoot sound
             function()
-                playSound("blasterLeft", blaster.left.hitbox:getPos())
+                astrosounds.play("blasterLeft", blaster.left.hitbox:getPos())
                 ammoUpdate(true, blaster.left.ammo)
             end,
             -- Reload sound
             function()
-                playSound("reloadLeft", blaster.left.hitbox:getPos())
+                astrosounds.play("reloadLeft", blaster.left.hitbox:getPos())
             end,
             -- Update ammo after reload
             function()
@@ -170,12 +171,12 @@ if SERVER then
         blaster.right:shoot(
             -- Shoot sound
             function()
-                playSound("blasterRight", blaster.right.hitbox:getPos())
+                astrosounds.play("blasterRight", blaster.right.hitbox:getPos())
                 ammoUpdate(false, blaster.right.ammo)
             end,
             -- Reload sound
             function()
-                playSound("reloadRight", blaster.right.hitbox:getPos())
+                astrosounds.play("reloadRight", blaster.right.hitbox:getPos())
             end,
             -- Update ammo after reload
             function()
@@ -213,7 +214,7 @@ if SERVER then
             astro.state = STATES.Dash
             local velocity = 30000
             local direction
-            playSound("dash", Vector(), astro.body)
+            astrosounds.play("dash", Vector(), astro.body)
             FTimer:new(3.5, 1, {
                 ["0-0.25"] = blaster.left:isAlive() and function(_, _, fraction)
                     local smoothed = math.easeInOutSine(fraction)
@@ -303,7 +304,7 @@ if SERVER then
                 removeLight("Underglow")
 
                 -- Stop loop
-                stopSound("loop")
+                astrosounds.stop("loop")
             end)
             net.start("AstroHealthUpdate")
             net.writeInt(astro.health, 12)
@@ -314,6 +315,7 @@ if SERVER then
 else
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
     require("ui")
+    require("sounds")
 
     local astroHealth = 1000
     local blasterLeftAmmo = 4
