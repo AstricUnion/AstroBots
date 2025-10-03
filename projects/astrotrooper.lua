@@ -59,6 +59,12 @@ if SERVER then
     local head_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 25), Angle(), headsize, true)
     local astro = AstroBase:new(STATES, body_hitbox, head_hitbox, seat, 1000)
 
+    -- Start sound --
+    hook.add("SoundPreloaded", "StartSound", function(name, ply)
+        if name ~= "loop" then return end
+        astrosounds.play("loop", Vector(), astro.body, ply)
+    end)
+
     -- Blasters --
     local blaster = {
         left = Blaster:new(chip():getPos() + Vector(0, 40, 0)),
@@ -113,13 +119,6 @@ if SERVER then
             body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 0.5))
         end
     })
-
-
-    -- Start sound --
-    hook.add("SoundPreloaded", "StartSound", function(name, ply)
-        if name ~= "loop" then return end
-        astrosounds.play("loop", Vector(), astro.body, ply)
-    end)
 
 
     -- Movement hook. There is all movement (blaster rotation, astro.head rotation, movement object think) --

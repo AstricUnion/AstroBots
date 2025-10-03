@@ -3,10 +3,12 @@
 --@shared
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
+--@include astricunion/libs/guns.lua
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
-require("sounds")
 require("light")
-require("guns")
+-- require("guns")
+require("astricunion/libs/guns.lua")
+local astrosounds = require("sounds")
 
 
 do
@@ -46,7 +48,21 @@ if SERVER then
     -- THIS FILE CREATES HOLOGRAMS --
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_scout_holos.lua as astroholos
     require("astroholos")
-    ---------------------------------
+
+
+    -- Preload sounds
+    hook.add("ClientInitialized", "Sounds", function(ply)
+        astrosounds.preload(
+            ply,
+            Sound:new("loop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/u61ky5sum5em1z0h9q98s/Energy4.wav?rlkey=pyg5cfqx3y10hhuqjxrrb14hh&st=b1v8aa6z&dl=1"),
+            Sound:new("laserStart", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/17opqov0vv6wk45efu19j/LaserStart.mp3?rlkey=vqn27h91nyk01i6ua0g8edups&st=00l7louv&dl=1"),
+            Sound:new("laserEnd", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/hpmlc9crbevep0x8aey2c/LaserEnd.mp3?rlkey=sf3yj1cymexqmq5etj6sw85ny&st=xkp019ib&dl=1"),
+            Sound:new("laserLoop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/euklzknybzlru8wm333o3/LaserCharge-Loop.mp3?rlkey=871s42g8em56reah137q3osaj&st=ghyw8tqa&dl=1"),
+            Sound:new("laserShoot", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/iduvkgjwg3cx9qb5kufuw/LaserShoot.mp3?rlkey=z5n1lk07izc6tcuiu8z5gwxvk&st=ktpvv7yx&dl=1"),
+            Sound:new("punch", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/3f7oso26jt98njb8rlwtc/Swing.mp3?rlkey=o7z0mgtp5p0hvlhfanwnlr1u5&st=9hmmjpds&dl=1"),
+            Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/frw4d1nvdpfqznyucis9r/Ram2.mp3?rlkey=drkc4dj16smf96htpy1yvz9z5&st=bk2xqso6&dl=1")
+        )
+    end)
 
     -- States
     local STATES = {
@@ -89,6 +105,12 @@ if SERVER then
         INITIAL_SPEED,
         INITIAL_SPRINT
     )
+
+    -- Start sound --
+    hook.add("SoundPreloaded", "StartSound", function(name, ply)
+        if name ~= "loop" then return end
+        astrosounds.play("loop", Vector(), astro.body, ply)
+    end)
 
     body.base[1]:setParent(body_hitbox)
     body.base[2]:setParent(body.base[1])
@@ -251,7 +273,7 @@ if SERVER then
             local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
             local total_damage = damage * (isBerserk() and BERSERK.DAMAGE or 1)
             attackDamage(
-                armPos - (armUp + armRight) * radius,
+                armPos - (armUp + armRight + armForward) * radius,
                 armPos + (armUp + armRight + armForward) * radius,
                 armForward,
                 total_damage,
@@ -279,6 +301,7 @@ if SERVER then
 
     local function clawsAttack()
         astro:setState(STATES.Attack)
+        astrosounds.play("punch", Vector(), body.rightarm[2])
         FTimer:new(1, 1, {
             ["0-0.4"] = clawsAttackSwing(),
             ["0.4-0.5"] = clawsAttackPunch(INITIAL_CLAWS_DAMAGE),
@@ -299,7 +322,9 @@ if SERVER then
         local baseang = body.base[1]:getLocalAngles()
         astro:setState(STATES.Laser)
         body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 800))
-        FTimer:new(0.5, 1, {
+        astrosounds.stop("laserEnd")
+        astrosounds.play("laserStart", Vector(), body.leftarm.laser[3])
+        FTimer:new(0.75, 1, {
             ["0-1"] = function(f, _, fraction)
                 if astro:getState() ~= STATES.Laser then f:remove() end
                 local smoothed = math.easeInOutCubic(fraction)
@@ -312,10 +337,11 @@ if SERVER then
                         ) - arm1ang
                     ) * smoothed
                 )
-                body.leftarm.laser[1]:setLocalAngles(arm2ang - (arm2ang) * smoothed)
+                body.leftarm.laser[1]:setLocalAngles(arm2ang + ( - arm2ang) * smoothed)
             end,
             [1] = function()
                 laser:start()
+                astrosounds.play("laserShoot", Vector(), body.leftarm.laser[3])
                 LASER_CONTROL = true
             end
         })
@@ -327,6 +353,10 @@ if SERVER then
         local arm2ang = body.leftarm.laser[1]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
         laser:stop()
+        astrosounds.stop("laserStart")
+        astrosounds.stop("laserLoop")
+        astrosounds.stop("laserShoot")
+        astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
         astro:setState(STATES.Idle)
         body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
         FTimer:new(0.75, 1, {
@@ -395,6 +425,9 @@ if SERVER then
         direction = direction:isZero() and astro.body:getForward() or direction
         FTimer:new(2.25, 1, {
             ["0-0.2"] = clawsAttackSwing(),
+            [0.25] = function()
+                astrosounds.play("dash", Vector(), astro.body)
+            end,
             ["0.2-1"] = function(f)
                 velocity = math.lerp(0.1, velocity, 0)
                 astro.body:addVelocity(direction * velocity)
@@ -416,11 +449,15 @@ if SERVER then
                     if isValid(ent) and isValid(ent:getPhysicsObject()) then
                         f:remove()
                         astro:setState(STATES.Attack)
+                        astrosounds.play("punch", Vector(), body.rightarm[2])
                         FTimer:new(1, 1, {
                             ["0-0.1"] = clawsAttackPunch(INITIAL_DASH_CLAWS_DAMAGE),
                             ["0.1-0.6"] = clawsAttackReturn(),
                             [0.625] = function(f)
                                 astro:setState(STATES.Idle)
+                                timer.simple(3, function()
+                                    CAN_DASH = true
+                                end)
                                 f:remove()
                             end
                         })
@@ -433,13 +470,13 @@ if SERVER then
                     ["0-1"] = clawsAttackReturn(),
                     [0.9375] = function()
                         astro:setState(STATES.Idle)
+                        timer.simple(3, function()
+                            CAN_DASH = true
+                        end)
                     end
                 })
             end
         })
-        timer.simple(5.25, function()
-            CAN_DASH = true
-        end)
     end
 
     local function syncLaser(dr)
@@ -468,7 +505,9 @@ if SERVER then
                         laserOff()
                     end)
                 end
-                laser:think()
+                laser:think(function(laser_trace)
+                    astrosounds.play("laserLoop", laser_trace.HitPos)
+                end)
             else
                 laser:increaseCharge(0.16 * game.getTickInterval())
             end
