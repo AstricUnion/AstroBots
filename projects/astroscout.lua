@@ -3,11 +3,9 @@
 --@shared
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
---@include astricunion/libs/guns.lua
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 require("light")
--- require("guns")
-require("astricunion/libs/guns.lua")
+require("guns")
 local astrosounds = require("sounds")
 
 
