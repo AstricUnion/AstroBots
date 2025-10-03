@@ -59,14 +59,16 @@ if SERVER then
     local astro = AstroBase:new(STATES, body_hitbox, head_hitbox, seat, 1000)
 
     -- Blasters --
-    local ignore = {astro.body, astro.head}
     local blaster = {
-        left = Blaster:new(chip():getPos() + Vector(0, 40, 0), ignore),
-        right = Blaster:new(chip():getPos() + Vector(0, -40, 0), ignore)
+        left = Blaster:new(chip():getPos() + Vector(0, 40, 0)),
+        right = Blaster:new(chip():getPos() + Vector(0, -40, 0))
     }
-    blaster.left:addIgnore(blaster.right.hitbox)
-    blaster.right:addIgnore(blaster.left.hitbox)
-    ignore = {blaster.left.hitbox, blaster.right.hitbox}
+    local ignore = {astro.body, astro.head, blaster.left.hitbox, blaster.right.hitbox}
+    for _, ent in ipairs(ignore) do
+        blaster.left:addIgnore(ent)
+        blaster.right:addIgnore(ent)
+        astro:addIgnore(ent)
+    end
 
 
     -- Parenting --
@@ -85,20 +87,29 @@ if SERVER then
 
 
     -- Idle animation --
-    local base_pos = body.base[1]:getLocalPos()
-    local head_pos = body.head:getLocalPos()
-    local idle = FTimer:new(4, -1, {
+    local base_pos
+    local head_pos
+    IdleAnimation = FTimer:new(4, -1, {
+        [0] = function()
+            base_pos = body.base[1]:getLocalPos()
+            head_pos = body.head:getLocalPos()
+        end,
+        ["0-1"] = function(_, _, fraction)
+            local rads = math.rad(360 * fraction)
+            local smoothed_x = math.sin(rads)
+            local smoothed_y = math.cos(rads)
+            body.base[1]:setLocalPos(base_pos + Vector(smoothed_x, 0, smoothed_y))
+            body.head:setLocalPos(head_pos + Vector(smoothed_x * 0.5, 0, smoothed_y * 0.5))
+        end,
         ["0-0.5"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(fraction)
-            body.base[1]:setLocalPos(base_pos + Vector(0, 0, 2 * smoothed))
-            body.head:setLocalPos(head_pos + Vector(-2 * smoothed, 0, 3 * smoothed))
-            body.head:setLocalAngles(Angle(-4 * smoothed, 0, 0))
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed))
+            body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 0.5))
         end,
         ["0.5-1"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(1 - fraction)
-            body.base[1]:setLocalPos(base_pos + Vector(0, 0, 2 * smoothed))
-            body.head:setLocalPos(head_pos + Vector(-2 * smoothed, 0, 3 * smoothed))
-            body.head:setLocalAngles(Angle(-4 * smoothed, 0, 0))
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed))
+            body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 0.5))
         end
     })
 
@@ -113,9 +124,9 @@ if SERVER then
     -- Movement hook. There is all movement (blaster rotation, astro.head rotation, movement object think) --
     hook.add("Think", "Movement", function()
         astro:think(function()
-            local eyeTrace = astro:eyeTrace(ignore)
-            if not eyeTrace then return end
-            if astro.state == STATES.Idle then
+            if astro.state == STATES.Idle and blaster.left:isAlive() and blaster.right:isAlive() then
+                local eyeTrace = astro:eyeTrace()
+                if !eyeTrace then return end
                 if blaster.left:isAlive() then
                     blaster.left.hitbox:setAngles((eyeTrace.HitPos - blaster.left.hitbox:getPos()):getAngle())
                 end
@@ -276,7 +287,7 @@ if SERVER then
                 blaster.right:damage(blaster.right.health)
 
                 -- Delete idle animation
-                idle:remove()
+                IdleAnimation:remove()
                 body.base[2]:setLocalAngularVelocity(Angle())
                 body.base[3]:setLocalAngularVelocity(Angle())
                 body.base[4]:setLocalAngularVelocity(Angle())

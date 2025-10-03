@@ -146,14 +146,14 @@ if SERVER then
         end
     })
 
-    local function attackDamage(min, max, direction, damage)
+    local function attackDamage(min, max, direction, damage, heal)
         local entsToDamage = find.inBox(min, max)
         for _, ent in ipairs(entsToDamage) do
             if ent == astro.body then continue end
-            if isValid(ent) then
+            if isValid(ent) and isValid(ent:getOwner()) and ent:isValidPhys() then
                 local velocityPermitted, _ = hasPermission("entities.setVelocity", ent)
-                if velocityPermitted and game.getTickCount() % 2 == 0 then
-                    if !ent:isNPC() and ent:isValidPhys() then
+                if velocityPermitted and game.getTickCount() % 2 == 0 and isValid(ent) then
+                    if !ent:isNPC() then
                         ent:getPhysicsObject():setVelocity(direction * 1000)
                     elseif ent:isNPC() then
                         ent:setVelocity(direction * 1000)
@@ -162,6 +162,12 @@ if SERVER then
                 local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
                 if damagePermitted then
                     ent:applyDamage(damage, nil, nil, DAMAGE.CRUSH)
+                    if heal then
+                        astro:damage(damage * -0.15)
+                        net.start("AstroHealthUpdate")
+                        net.writeInt(math.clamp(astro.health, 0, INITIAL_HEALTH), 16)
+                        net.send(find.allPlayers())
+                    end
                 end
             end
         end
@@ -243,11 +249,13 @@ if SERVER then
             local armUp = body.rightarm[3]:getUp()
             local armRight = body.rightarm[3]:getRight()
             local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
+            local total_damage = damage * (isBerserk() and BERSERK.DAMAGE or 1)
             attackDamage(
                 armPos - (armUp + armRight) * radius,
                 armPos + (armUp + armRight + armForward) * radius,
                 armForward,
-                damage * (isBerserk() and BERSERK.DAMAGE or 1)
+                total_damage,
+                true
             )
         end
     end
@@ -482,7 +490,7 @@ if SERVER then
             elseif key == KEY.R then
                 laserOn()
             -- Berserk: F
-            elseif key == KEY.F then
+            elseif key == KEY.F and BERSERK_DAMAGE >= 3200 then
                 BERSERK_TIME = 12
                 BERSERK_DAMAGE = 0
                 laser:setDamage(INITIAL_LASER_DAMAGE * BERSERK.DAMAGE)
@@ -508,9 +516,12 @@ if SERVER then
     end)
 
 
-    timer.create("BerserkDecrease", 0.1, 0, function()
+    timer.create("BerserkDecrease", 0.01, 0, function()
         if BERSERK_TIME == 0 then return end
-        BERSERK_TIME = BERSERK_TIME - 0.1
+        BERSERK_TIME = math.round(BERSERK_TIME - 0.01, 2)
+        net.start("BerserkStatusUpdate")
+        net.writeInt(math.round((BERSERK_TIME / 12) * 100), 8)
+        net.send(find.allPlayers())
         print(BERSERK_TIME)
         if BERSERK_TIME <= 0 then
             laser:setDamage(INITIAL_LASER_DAMAGE)
@@ -531,13 +542,16 @@ if SERVER then
                     0,
                     3200
                 )
+                net.start("BerserkStatusUpdate")
+                net.writeInt(math.round((BERSERK_DAMAGE / 3200) * 100), 8)
+                net.send(find.allPlayers())
             end
             amount = amount * (state == STATES.Block and 0.6 or 1)
             astro:damage(amount, function()
                 -- Remove hooks
                 hook.remove("EntityTakeDamage", "DriverDefense")
                 hook.remove("Think", "Movement")
-                hook.remove("EntityTakeDamage", "health")
+                hook.remove("PostEntityTakeDamage", "health")
                 timer.remove("increaseLaser")
 
                 -- Remove animation
@@ -566,6 +580,8 @@ else
     local laserBar
     ---@type Bar
     local healthBar
+    ---@type Bar
+    local berserkBar
     ---@type number
     local astroHealth = INITIAL_HEALTH
     ---@type number
@@ -599,6 +615,17 @@ else
             healthBar:setLabelRight(tostring(astroHealth) .. "%")
                 :setPercent(astroHealth / 6500)
                 :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
+                :draw()
+
+            ---- Berserk ----
+            if !berserkBar then
+                berserkBar = Bar:new(sw / 2 - 100, sh * 0.7, 200, 30, 0)
+                    :setLabelLeft("BERSERK")
+            end
+            local inverseCurrent = 1 - berserkCharge
+            berserkBar:setLabelRight(tostring(berserkCharge * 100) .. "%")
+                :setPercent(berserkCharge)
+                :setBarColor(Color(255, 255 * inverseCurrent, 255 * inverseCurrent, 255))
                 :draw()
         end)
 
@@ -652,11 +679,11 @@ else
     end)
 
     net.receive("LaserChargeUpdate", function()
-        local percent = net.readFloat()
-        laserCharge = percent
+        laserCharge = net.readFloat()
     end)
 
     net.receive("BerserkStatusUpdate", function()
+        berserkCharge = net.readInt(8) / 100
     end)
 end
 
