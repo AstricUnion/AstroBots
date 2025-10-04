@@ -3,9 +3,28 @@ There are our main projects and holograms
 ## AstroTrooper
 Small and accurate, very useful in closed area
 ![AstroTrooper in-game](https://github.com/AstricUnion/AstroBots/blob/main/assets/astrotrooper.jpg?raw=true)
+<details>
+<summary>Controls</summary>
+
+* WASD - Movement
+* LMB - Shoot with blaster
+* RMB - Dash
+
+</details>
+
+<details>
+<summary>Details</summary>
+
+### Blasters
+* Has a 8 ammo (4 per blaster). Takes 50 damage. Blaster reload takes 0.5 seconds
+
+### Dash
+* Dash. Has cooldown 3 seconds
+* Takes 50 damage per tick to entity in front of AstroTrooper
+
+</details>
 
 ## AstroScout (WIP)
-Big and powerful, has a Berserk mode, that's increasing his power
 ![AstroScout in-game](https://github.com/AstricUnion/AstroBots/blob/main/assets/astroscout.jpg?raw=true)
 <details>
 <summary>Controls</summary>
