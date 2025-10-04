@@ -421,7 +421,6 @@ if SERVER then
         local rightarm3ang = body.rightarm[3]:getLocalAngles()
         FTimer:new(0.5, 1, {
             ["0-1"] = function(_, _, fraction)
-                print("te")
                 local smoothed = math.easeInOutExpo(fraction)
                 body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(40, 120, 120) - leftarm1ang) * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-100, 0, 0) - leftarm2ang) * smoothed)
