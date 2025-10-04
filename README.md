@@ -24,8 +24,29 @@ Big and powerful, has a Berserk mode, that's increasing his power
 <summary>Details</summary>
 
 ### Laser
-Has a 6 seconds charge. Can be activated in any time
-![](https://github.com/AstricUnion/AstroBots/blob/main/assets/laser.gif?raw=true)
+* Has a 6 seconds charge. Can be activated in any time
+> ![Laser in action](https://github.com/AstricUnion/AstroBots/blob/main/assets/laser.gif?raw=true)
+
+### Punch
+* Weak punch, takes 350 damage
+
+### Punch with claws
+* Punch, has claws, takes 600 damage and heals 15% from taked damage
+
+### Berserk
+> [!WARNING]
+> To activate Berserk mode, you should receive a 3200 damage. Berserk gives for a 12 seconds
+* Berserk mode gives multipliers to
+    * Damage (150%)
+    * Speed (120%)
+    * Attack radius (120%)
+
+### Dash
+* Dash. Has cooldown 3 seconds after stop.
+* Takes 1200 damage to entity in front of AstroScout
+
+### Block
+* Absorbs 60% of damage to AstroScout, but fills Berserk bar by 120% of this damage
 
 </details>
 
