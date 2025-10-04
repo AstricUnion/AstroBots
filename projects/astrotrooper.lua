@@ -280,7 +280,7 @@ if SERVER then
         elseif target == blaster.right.hitbox then
             blaster.right:damage(amount)
             blasterHealthUpdate(false, blaster.right.health)
-        elseif target == astro.body or target == astro.head then
+        elseif target == astro.body then
             astro:damage(amount, function()
                 -- Destroy blasters --
                 blaster.left:damage(blaster.left.health)

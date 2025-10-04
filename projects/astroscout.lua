@@ -41,8 +41,10 @@ end
 CHIPPOS = chip():getPos()
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
+    --@include astricunion/libs/astrobase.lua
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    require("astrobase")
+    -- require("astrobase")
+    require("astricunion/libs/astrobase.lua")
     require("ftimers")
 
     -- THIS FILE CREATES HOLOGRAMS --
@@ -597,7 +599,7 @@ if SERVER then
 
     -- Health --
     hook.add("PostEntityTakeDamage", "Health", function(target, _, _, amount)
-        if target == astro.body or target == astro.head then
+        if target == astro.body then
             local state = astro:getState()
             if BERSERK_TIME == 0 and BERSERK_DAMAGE < 3200 then
                 BERSERK_DAMAGE = math.clamp(
