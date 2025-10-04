@@ -53,8 +53,10 @@ Small and accurate, very useful in closed area
 * Punch, has claws, takes 600 damage and heals 15% from taked damage
 
 ### Berserk
+
 > [!NOTE]
 > To activate Berserk mode, you should receive a 3200 damage. Berserk gives for a 12 seconds
+
 * Berserk mode gives multipliers to
     * Damage (150%)
     * Speed (120%)
