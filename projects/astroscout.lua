@@ -9,6 +9,7 @@ require("guns")
 local astrosounds = require("sounds")
 
 
+
 do
     ---Initial health. Can be edited
     INITIAL_HEALTH = 6500
@@ -37,6 +38,7 @@ end
 
 
 
+CHIPPOS = chip():getPos()
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
@@ -58,7 +60,7 @@ if SERVER then
             Sound:new("laserLoop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/euklzknybzlru8wm333o3/LaserCharge-Loop.mp3?rlkey=871s42g8em56reah137q3osaj&st=ghyw8tqa&dl=1"),
             Sound:new("laserShoot", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/iduvkgjwg3cx9qb5kufuw/LaserShoot.mp3?rlkey=z5n1lk07izc6tcuiu8z5gwxvk&st=ktpvv7yx&dl=1"),
             Sound:new("punchClaws", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/3f7oso26jt98njb8rlwtc/Swing.mp3?rlkey=o7z0mgtp5p0hvlhfanwnlr1u5&st=9hmmjpds&dl=1"),
-            Sound:new("punch", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/d2995xr0baq1i2zvyk0bn/Punch1.mp3?rlkey=ivlnj2yk9evy6p1o0bfeayz0j&st=o2xj8x1q&dl=1"),
+            Sound:new("punch", 3, false, "https://www.dl.dropboxusercontent.com/scl/fi/d2995xr0baq1i2zvyk0bn/Punch1.mp3?rlkey=ivlnj2yk9evy6p1o0bfeayz0j&st=o2xj8x1q&dl=1"),
             Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/frw4d1nvdpfqznyucis9r/Ram2.mp3?rlkey=drkc4dj16smf96htpy1yvz9z5&st=bk2xqso6&dl=1")
         )
     end)
@@ -90,11 +92,11 @@ if SERVER then
     createLight("Underglow", body.base[1], Vector(0, 0, -40), 80, 10, Color(255, 0, 0))
 
     ---@type Vehicle
-    local seat = prop.createSeat(chip():getPos() + Vector(0, 0, 20), Angle(), "models/nova/airboat_seat.mdl")
+    local seat = prop.createSeat(CHIPPOS + Vector(0, 0, 20), Angle(), "models/nova/airboat_seat.mdl")
     local size = Vector(80, 80, 20)
     local headsize = Vector(30, 30, 30)
-    local body_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 10), Angle(), size, true)
-    local head_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 60), Angle(), headsize, true)
+    local body_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, 10), Angle(), size, true)
+    local head_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, 60), Angle(), headsize, true)
     local astro = AstroBase:new(
         STATES,
         body_hitbox,
@@ -111,15 +113,30 @@ if SERVER then
         astrosounds.play("loop", Vector(), astro.body, ply)
     end)
 
+    local arms = {
+        leftarm = {
+            hitbox.cube(CHIPPOS + Vector(-3,110,25), Angle(), Vector(25, 60, 25), true, true),
+            hitbox.cube(CHIPPOS + Vector(-3,200,25), Angle(), Vector(20, 50, 20), true, true)
+        },
+        rightarm = {
+            hitbox.cube(CHIPPOS + Vector(-3,-110,25), Angle(), Vector(25, 60, 25), true, true),
+            hitbox.cube(CHIPPOS + Vector(-3,-200,25), Angle(), Vector(20, 50, 20), true, true)
+        }
+    }
+
     body.base[1]:setParent(body_hitbox)
     body.base[2]:setParent(body.base[1])
     body.head:setParent(head_hitbox)
     body.leftarm[1]:setParent(body.base[1])
+    arms.leftarm[1]:setParent(body.leftarm[1])
     body.leftarm.laser[1]:setParent(body.leftarm[1])
+    arms.leftarm[2]:setParent(body.leftarm.laser[1])
     body.leftarm.laser[2]:setParent(body.leftarm.laser[1])
     body.leftarm.laser[3]:setParent(body.leftarm.laser[2])
     body.rightarm[1]:setParent(body.base[1])
+    arms.rightarm[1]:setParent(body.rightarm[1])
     body.rightarm[2]:setParent(body.rightarm[1])
+    arms.rightarm[2]:setParent(body.rightarm[2])
     body.rightarm[3]:setParent(body.rightarm[2])
 
     body.base[2]:setLocalAngularVelocity(Angle(0, 200, 0))
