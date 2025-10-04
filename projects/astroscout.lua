@@ -120,7 +120,8 @@ if SERVER then
         },
         rightarm = {
             hitbox.cube(CHIPPOS + Vector(-3,-110,25), Angle(), Vector(25, 60, 25), true, true),
-            hitbox.cube(CHIPPOS + Vector(-3,-200,25), Angle(), Vector(20, 50, 20), true, true)
+            hitbox.cube(CHIPPOS + Vector(-3,-200,25), Angle(), Vector(20, 50, 20), true, true),
+            hitbox.cube(CHIPPOS + Vector(-3,-280,25), Angle(), Vector(25, 30, 25), true, true)
         }
     }
 
@@ -128,16 +129,19 @@ if SERVER then
     body.base[2]:setParent(body.base[1])
     body.head:setParent(head_hitbox)
     body.leftarm[1]:setParent(body.base[1])
-    arms.leftarm[1]:setParent(body.leftarm[1])
     body.leftarm.laser[1]:setParent(body.leftarm[1])
-    arms.leftarm[2]:setParent(body.leftarm.laser[1])
     body.leftarm.laser[2]:setParent(body.leftarm.laser[1])
     body.leftarm.laser[3]:setParent(body.leftarm.laser[2])
     body.rightarm[1]:setParent(body.base[1])
-    arms.rightarm[1]:setParent(body.rightarm[1])
     body.rightarm[2]:setParent(body.rightarm[1])
-    arms.rightarm[2]:setParent(body.rightarm[2])
     body.rightarm[3]:setParent(body.rightarm[2])
+
+    arms.leftarm[1]:setParent(body.leftarm[1])
+    arms.leftarm[2]:setParent(body.leftarm.laser[1])
+    arms.rightarm[1]:setParent(body.rightarm[1])
+    arms.rightarm[2]:setParent(body.rightarm[2])
+    arms.rightarm[3]:setParent(body.rightarm[3])
+
 
     body.base[2]:setLocalAngularVelocity(Angle(0, 200, 0))
     body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
@@ -155,6 +159,11 @@ if SERVER then
     if !laser then
         throw("Oops, something is wrong. Please, copy output from console and send it to issues")
         return
+    end
+
+    for _, v in ipairs(table.add(arms.rightarm, arms.leftarm)) do
+        laser:addIgnore(v)
+        astro:addIgnore(v)
     end
 
     -- Idle animation
