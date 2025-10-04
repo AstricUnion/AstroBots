@@ -170,14 +170,10 @@ if SERVER then
         local entsToDamage = find.inBox(min, max)
         for _, ent in ipairs(entsToDamage) do
             if ent == astro.body or ent == astro.head then continue end
-            if isValid(ent) and isValid(ent:getOwner()) and ent:isValidPhys() then
+            if isValid(ent) and ent:isValidPhys() then
                 local velocityPermitted, _ = hasPermission("entities.setVelocity", ent)
                 if velocityPermitted and game.getTickCount() % 2 == 0 and isValid(ent) then
-                    if !ent:isNPC() then
-                        ent:getPhysicsObject():setVelocity(direction * 1000)
-                    elseif ent:isNPC() then
-                        ent:setVelocity(direction * 1000)
-                    end
+                    ent:getPhysicsObject():setVelocity(direction * 1000)
                 end
                 local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
                 if damagePermitted then
