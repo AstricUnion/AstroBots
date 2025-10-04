@@ -54,7 +54,7 @@ if SERVER then
     hook.add("ClientInitialized", "Sounds", function(ply)
         astrosounds.preload(
             ply,
-            Sound:new("loop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/u61ky5sum5em1z0h9q98s/Energy4.wav?rlkey=pyg5cfqx3y10hhuqjxrrb14hh&st=b1v8aa6z&dl=1"),
+            Sound:new("loop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/n9tzb3v1vs6x1fayy9cig/saberamb.mp3?rlkey=usn1ur6e34g8aiuhbjie7wn0a&st=g37ivi7q&dl=1"),
             Sound:new("laserStart", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/17opqov0vv6wk45efu19j/LaserStart.mp3?rlkey=vqn27h91nyk01i6ua0g8edups&st=00l7louv&dl=1"),
             Sound:new("laserEnd", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/hpmlc9crbevep0x8aey2c/LaserEnd.mp3?rlkey=sf3yj1cymexqmq5etj6sw85ny&st=xkp019ib&dl=1"),
             Sound:new("laserLoop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/euklzknybzlru8wm333o3/LaserCharge-Loop.mp3?rlkey=871s42g8em56reah137q3osaj&st=ghyw8tqa&dl=1"),
@@ -115,13 +115,13 @@ if SERVER then
 
     local arms = {
         leftarm = {
-            hitbox.cube(CHIPPOS + Vector(-3,110,25), Angle(), Vector(25, 60, 25), true, true),
-            hitbox.cube(CHIPPOS + Vector(-3,200,25), Angle(), Vector(20, 50, 20), true, true)
+            hitbox.cube(CHIPPOS + Vector(-3,110,25), Angle(), Vector(25, 60, 25), true),
+            hitbox.cube(CHIPPOS + Vector(-3,200,25), Angle(), Vector(20, 50, 20), true)
         },
         rightarm = {
-            hitbox.cube(CHIPPOS + Vector(-3,-110,25), Angle(), Vector(25, 60, 25), true, true),
-            hitbox.cube(CHIPPOS + Vector(-3,-200,25), Angle(), Vector(20, 50, 20), true, true),
-            hitbox.cube(CHIPPOS + Vector(-3,-280,25), Angle(), Vector(25, 30, 25), true, true)
+            hitbox.cube(CHIPPOS + Vector(-3,-110,25), Angle(), Vector(25, 60, 25), true),
+            hitbox.cube(CHIPPOS + Vector(-3,-200,25), Angle(), Vector(20, 50, 20), true),
+            hitbox.cube(CHIPPOS + Vector(-3,-280,25), Angle(), Vector(25, 30, 25), true)
         }
     }
 
@@ -141,7 +141,6 @@ if SERVER then
     arms.rightarm[1]:setParent(body.rightarm[1])
     arms.rightarm[2]:setParent(body.rightarm[2])
     arms.rightarm[3]:setParent(body.rightarm[3])
-
 
     body.base[2]:setLocalAngularVelocity(Angle(0, 200, 0))
     body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
@@ -193,7 +192,7 @@ if SERVER then
         end
     })
 
-    local function attackDamage(min, max, direction, damage, heal)
+    local function attackDamage(min, max, direction, damage, inflictor)
         local entsToDamage = find.inBox(min, max)
         for _, ent in ipairs(entsToDamage) do
             if ent == astro.body or ent == astro.head then continue end
@@ -204,13 +203,7 @@ if SERVER then
                 end
                 local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
                 if damagePermitted then
-                    ent:applyDamage(damage, nil, nil, DAMAGE.CRUSH)
-                    if heal then
-                        astro:damage(damage * -0.15)
-                        net.start("AstroHealthUpdate")
-                        net.writeInt(math.clamp(astro.health, 0, INITIAL_HEALTH), 16)
-                        net.send(find.allPlayers())
-                    end
+                    ent:applyDamage(math.clamp(damage, 0, ent:getHealth()), nil, inflictor, DAMAGE.CRUSH)
                 end
             end
         end
@@ -243,7 +236,8 @@ if SERVER then
                     armPos - (armUp + armRight + (armForward * 3)) * radius,
                     armPos + (armUp + armRight + (armForward * 2)) * radius,
                     armForward,
-                    INITIAL_PUNCH_DAMAGE * (isBerserk() and BERSERK.DAMAGE or 1)
+                    INITIAL_PUNCH_DAMAGE * (isBerserk() and BERSERK.DAMAGE or 1),
+                    arms.rightarm[3]
                 )
             end,
             ["0.7-1"] = function(_, _, fraction)
@@ -299,7 +293,7 @@ if SERVER then
                 armPos + (armUp + armRight + (armForward * 3)) * radius,
                 armForward,
                 total_damage,
-                true
+                arms.rightarm[2]
             )
         end
     end
@@ -589,6 +583,15 @@ if SERVER then
             laser:setDamage(INITIAL_LASER_DAMAGE)
             laser:setDamageRadius(INITIAL_LASER_RADIUS)
             BERSERK_TIME = 0
+        end
+    end)
+
+    hook.add("PostEntityTakeDamage", "ClawsHeal", function(target, _, inflictor, amount)
+        if inflictor == arms.rightarm[2] then
+            astro:damage(amount * -0.15)
+            net.start("AstroHealthUpdate")
+            net.writeInt(math.clamp(astro.health, 0, INITIAL_HEALTH), 16)
+            net.send(find.allPlayers())
         end
     end)
 
