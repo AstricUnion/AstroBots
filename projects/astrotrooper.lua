@@ -24,9 +24,8 @@ if SERVER then
 
     -- States
     local STATES = {
-        NotInUse = -1,
-        Idle = 1,
-        Dash = 2
+        Idle = 0,
+        Dash = 1
     }
 
     -- Cooldowns
@@ -57,7 +56,7 @@ if SERVER then
     local headsize = Vector(12, 12, 12)
     local body_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, -7.5), Angle(), size, true)
     local head_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 25), Angle(), headsize, true)
-    local astro = AstroBase:new(STATES, body_hitbox, head_hitbox, seat, 1000)
+    local astro = AstroBase:new(body_hitbox, head_hitbox, seat, 1000)
 
     -- Start sound --
     hook.add("SoundPreloaded", "StartSound", function(name, ply)

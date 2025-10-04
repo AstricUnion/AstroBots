@@ -41,10 +41,8 @@ end
 CHIPPOS = chip():getPos()
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
-    --@include astricunion/libs/astrobase.lua
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    -- require("astrobase")
-    require("astricunion/libs/astrobase.lua")
+    require("astrobase")
     require("ftimers")
 
     -- THIS FILE CREATES HOLOGRAMS --
@@ -69,12 +67,11 @@ if SERVER then
 
     -- States
     local STATES = {
-        NotInUse = -1,
-        Idle = 1,
-        Attack = 2,
-        Laser = 3,
-        Block = 4,
-        Dash = 5
+        Idle = 0,
+        Attack = 1,
+        Laser = 2,
+        Block = 3,
+        Dash = 4
     }
 
     -- Berserk mode
@@ -100,7 +97,6 @@ if SERVER then
     local body_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, 10), Angle(), size, true)
     local head_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, 60), Angle(), headsize, true)
     local astro = AstroBase:new(
-        STATES,
         body_hitbox,
         head_hitbox,
         seat,
@@ -155,6 +151,9 @@ if SERVER then
     body.rightarm[2]:setLocalAngles(Angle(-100, 0, 0))
     body.rightarm[3]:setLocalAngles(Angle(0, 10, 90))
 
+    astro.body:setPos(CHIPPOS + Vector(0, 0, 50))
+    astro.body:setFrozen(false)
+
 
     local laser = Laser:new(body.leftarm.laser[2], 14, INITIAL_LASER_DAMAGE, INITIAL_LASER_RADIUS)
     if !laser then
@@ -162,7 +161,8 @@ if SERVER then
         return
     end
 
-    for _, v in ipairs(table.add(arms.rightarm, arms.leftarm)) do
+    local arms_list = table.add(arms.rightarm, arms.leftarm)
+    for _, v in ipairs(arms_list) do
         laser:addIgnore(v)
         astro:addIgnore(v)
     end
@@ -420,8 +420,8 @@ if SERVER then
         local rightarm2ang = body.rightarm[2]:getLocalAngles()
         local rightarm3ang = body.rightarm[3]:getLocalAngles()
         FTimer:new(0.5, 1, {
-            ["0-1"] = function(f, _, fraction)
-                if astro:getState() ~= STATES.Block then f:remove() end
+            ["0-1"] = function(_, _, fraction)
+                print("te")
                 local smoothed = math.easeInOutExpo(fraction)
                 body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(40, 120, 120) - leftarm1ang) * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-100, 0, 0) - leftarm2ang) * smoothed)
@@ -463,10 +463,11 @@ if SERVER then
                     if ent == astro.body
                     or ent == astro.head
                     or ent == astro.driver
-                    or ent == astro.seat then
+                    or ent == astro.seat
+                    or table.hasValue(arms_list, ent) then
                         continue
                     end
-                    if isValid(ent) and isValid(ent:getPhysicsObject()) then
+                    if isValid(ent) and ent:isValidPhys() then
                         f:remove()
                         astro:setState(STATES.Attack)
                         astrosounds.play("punchClaws", Vector(), body.rightarm[2])
@@ -635,6 +636,15 @@ if SERVER then
             net.start("AstroHealthUpdate")
             net.writeInt(astro.health, 16)
             net.send(find.allPlayers())
+        end
+    end)
+
+    hook.add("AstroDeactivate", "deactivate", function(as, _)
+        if as ~= astro then return end
+        if LASER_CONTROL and astro:getState() == STATES.Laser then
+            laserOff()
+        elseif astro:getState() == STATES.Block then
+            armUnblock()
         end
     end)
 else
