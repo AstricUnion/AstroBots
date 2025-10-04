@@ -169,7 +169,7 @@ if SERVER then
     local function attackDamage(min, max, direction, damage, heal)
         local entsToDamage = find.inBox(min, max)
         for _, ent in ipairs(entsToDamage) do
-            if ent == astro.body then continue end
+            if ent == astro.body or ent == astro.head then continue end
             if isValid(ent) and isValid(ent:getOwner()) and ent:isValidPhys() then
                 local velocityPermitted, _ = hasPermission("entities.setVelocity", ent)
                 if velocityPermitted and game.getTickCount() % 2 == 0 and isValid(ent) then
@@ -216,8 +216,8 @@ if SERVER then
                 local armRight = body.rightarm[3]:getRight()
                 local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
                 attackDamage(
-                    armPos - (armUp + armRight) * radius,
-                    armPos + (armUp + armRight + armForward) * radius,
+                    armPos - (armUp + armRight + (armForward * 3)) * radius,
+                    armPos + (armUp + armRight + (armForward * 2)) * radius,
                     armForward,
                     INITIAL_PUNCH_DAMAGE * (isBerserk() and BERSERK.DAMAGE or 1)
                 )
@@ -271,8 +271,8 @@ if SERVER then
             local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
             local total_damage = damage * (isBerserk() and BERSERK.DAMAGE or 1)
             attackDamage(
-                armPos - (armUp + armRight + armForward) * radius,
-                armPos + (armUp + armRight + armForward) * radius,
+                armPos - (armUp + armRight + (armForward * 3)) * radius,
+                armPos + (armUp + armRight + (armForward * 3)) * radius,
                 armForward,
                 total_damage,
                 true

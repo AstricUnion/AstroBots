@@ -5,6 +5,7 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 require("light")
+local astrosounds = require("sounds")
 
 
 if SERVER then
@@ -13,7 +14,6 @@ if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
 
-    local astrosounds = require("sounds")
     require("guns")
     require("ftimers")
     require("astrobase")
@@ -314,7 +314,6 @@ if SERVER then
 else
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
     require("ui")
-    require("sounds")
 
     local astroHealth = 1000
     local blasterLeftAmmo = 4
