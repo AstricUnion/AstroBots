@@ -12,17 +12,12 @@ Small and accurate, very useful in closed area
 
 </details>
 
-<details>
-<summary>Details</summary>
-
 ### Blasters
 * Has a 8 ammo (4 per blaster). Takes 50 damage. Blaster reload takes 0.5 seconds
 
 ### Dash
 * Dash. Has cooldown 3 seconds
 * Takes 50 damage per tick to entity in front of AstroTrooper
-
-</details>
 
 ## AstroScout (WIP)
 ![AstroScout in-game](https://github.com/AstricUnion/AstroBots/blob/main/assets/astroscout.jpg?raw=true)
@@ -39,9 +34,6 @@ Small and accurate, very useful in closed area
 
 </details>
 
-<details>
-<summary>Details</summary>
-
 ### Laser
 * Has a 6 seconds charge. Can be activated in any time
 > ![Laser in action](https://github.com/AstricUnion/AstroBots/blob/main/assets/laser.gif?raw=true)
@@ -54,8 +46,8 @@ Small and accurate, very useful in closed area
 
 ### Berserk
 
->[!WARNING]
->To activate Berserk mode, you should receive a 3200 damage. Berserk gives for a 12 seconds
+> [!WARNING]
+> To activate Berserk mode, you should receive a 3200 damage. Berserk gives for a 12 seconds
 
 * Berserk mode gives multipliers to
     * Damage (150%)
@@ -68,8 +60,6 @@ Small and accurate, very useful in closed area
 
 ### Block
 * Absorbs 60% of damage to AstroScout, but fills Berserk bar by 120% of this damage
-
-</details>
 
 ## AstroStriker (WIP)
 Coming soon...
