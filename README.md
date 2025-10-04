@@ -54,8 +54,8 @@ Small and accurate, very useful in closed area
 
 ### Berserk
 
-> [!NOTE]
-> To activate Berserk mode, you should receive a 3200 damage. Berserk gives for a 12 seconds
+>[!WARNING]
+>To activate Berserk mode, you should receive a 3200 damage. Berserk gives for a 12 seconds
 
 * Berserk mode gives multipliers to
     * Damage (150%)
