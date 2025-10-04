@@ -57,7 +57,8 @@ if SERVER then
             Sound:new("laserEnd", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/hpmlc9crbevep0x8aey2c/LaserEnd.mp3?rlkey=sf3yj1cymexqmq5etj6sw85ny&st=xkp019ib&dl=1"),
             Sound:new("laserLoop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/euklzknybzlru8wm333o3/LaserCharge-Loop.mp3?rlkey=871s42g8em56reah137q3osaj&st=ghyw8tqa&dl=1"),
             Sound:new("laserShoot", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/iduvkgjwg3cx9qb5kufuw/LaserShoot.mp3?rlkey=z5n1lk07izc6tcuiu8z5gwxvk&st=ktpvv7yx&dl=1"),
-            Sound:new("punch", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/3f7oso26jt98njb8rlwtc/Swing.mp3?rlkey=o7z0mgtp5p0hvlhfanwnlr1u5&st=9hmmjpds&dl=1"),
+            Sound:new("punchClaws", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/3f7oso26jt98njb8rlwtc/Swing.mp3?rlkey=o7z0mgtp5p0hvlhfanwnlr1u5&st=9hmmjpds&dl=1"),
+            Sound:new("punch", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/d2995xr0baq1i2zvyk0bn/Punch1.mp3?rlkey=ivlnj2yk9evy6p1o0bfeayz0j&st=o2xj8x1q&dl=1"),
             Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/frw4d1nvdpfqznyucis9r/Ram2.mp3?rlkey=drkc4dj16smf96htpy1yvz9z5&st=bk2xqso6&dl=1")
         )
     end)
@@ -196,6 +197,7 @@ if SERVER then
         local arm3ang = body.rightarm[3]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
         astro:setState(STATES.Attack)
+        astrosounds.play("punch", Vector(), body.rightarm[2])
         FTimer:new(0.5, 1, {
             ["0-0.3"] = function(_, _, fraction)
                 local smoothed = math.easeOutQuint(fraction) body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
@@ -295,7 +297,7 @@ if SERVER then
 
     local function clawsAttack()
         astro:setState(STATES.Attack)
-        astrosounds.play("punch", Vector(), body.rightarm[2])
+        astrosounds.play("punchClaws", Vector(), body.rightarm[2])
         FTimer:new(1, 1, {
             ["0-0.4"] = clawsAttackSwing(),
             ["0.4-0.5"] = clawsAttackPunch(INITIAL_CLAWS_DAMAGE),
@@ -315,12 +317,12 @@ if SERVER then
         local arm2ang = body.leftarm.laser[1]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
         astro:setState(STATES.Laser)
-        body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 800))
         astrosounds.stop("laserEnd")
         astrosounds.play("laserStart", Vector(), body.leftarm.laser[3])
         FTimer:new(0.75, 1, {
             ["0-1"] = function(f, _, fraction)
                 if astro:getState() ~= STATES.Laser then f:remove() end
+                body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * fraction)))
                 local smoothed = math.easeInOutCubic(fraction)
                 local res = astro:eyeTrace()
                 body.base[1]:setLocalAngles(baseang - (Angle(0, 30, -10) - baseang) * smoothed)
@@ -352,8 +354,10 @@ if SERVER then
         astrosounds.stop("laserShoot")
         astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
         astro:setState(STATES.Idle)
-        body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
         FTimer:new(0.75, 1, {
+            ["0-1"] = function(_, _, fraction)
+                body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * (1 - fraction))))
+            end,
             ["0.3-1"] = function(_, _, fraction)
                 local smoothed = math.easeInOutCubic(fraction)
                 body.base[1]:setLocalAngles(baseang - baseang * smoothed)
@@ -443,7 +447,7 @@ if SERVER then
                     if isValid(ent) and isValid(ent:getPhysicsObject()) then
                         f:remove()
                         astro:setState(STATES.Attack)
-                        astrosounds.play("punch", Vector(), body.rightarm[2])
+                        astrosounds.play("punchClaws", Vector(), body.rightarm[2])
                         FTimer:new(1, 1, {
                             ["0-0.1"] = clawsAttackPunch(INITIAL_DASH_CLAWS_DAMAGE),
                             ["0.1-0.6"] = clawsAttackReturn(),
