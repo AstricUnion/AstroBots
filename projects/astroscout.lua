@@ -1,4 +1,4 @@
---@name AstroScout (WIP)
+--@name AstroScout (BETA)
 --@author AstricUnion
 --@shared
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
@@ -395,12 +395,12 @@ if SERVER then
 
 
     local function armBlock()
+        astro:setState(STATES.Block)
         local leftarm1ang = body.leftarm[1]:getLocalAngles()
         local leftarm2ang = body.leftarm.laser[1]:getLocalAngles()
         local rightarm1ang = body.rightarm[1]:getLocalAngles()
         local rightarm2ang = body.rightarm[2]:getLocalAngles()
         local rightarm3ang = body.rightarm[3]:getLocalAngles()
-        astro:setState(STATES.Block)
         FTimer:new(0.35, 1, {
             ["0-1"] = function(f, _, fraction)
                 if astro:getState() ~= STATES.Block then f:remove() end
@@ -421,7 +421,8 @@ if SERVER then
         local rightarm2ang = body.rightarm[2]:getLocalAngles()
         local rightarm3ang = body.rightarm[3]:getLocalAngles()
         FTimer:new(0.5, 1, {
-            ["0-1"] = function(_, _, fraction)
+            ["0-1"] = function(f, _, fraction)
+                if astro:getState() ~= STATES.Block then f:remove() end
                 local smoothed = math.easeInOutExpo(fraction)
                 body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(40, 120, 120) - leftarm1ang) * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-100, 0, 0) - leftarm2ang) * smoothed)
@@ -680,6 +681,7 @@ else
     require("ui")
 
     local head
+    local overlay = material.load("effects/combine_binocoverlay")
 
     ---@type Bar
     local laserBar
@@ -704,7 +706,7 @@ else
 
             ---- Laser ----
             if !laserBar then
-                laserBar = Bar:new(sw * 0.1, sh * 0.8, 200, 30, 1)
+                laserBar = Bar:new(sw * 0.15, sh * 0.8, 200, 30, 1)
                     :setLabelLeft("LASER")
             end
             laserBar:setLabelRight(tostring(math.round(laserBar.current_percent * 100)) .. "%")
@@ -718,7 +720,7 @@ else
             end
             local current = healthBar.current_percent
             healthBar:setLabelRight(tostring(astroHealth) .. "%")
-                :setPercent(astroHealth / 6500)
+                :setPercent(astroHealth / INITIAL_HEALTH)
                 :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
                 :draw()
 
@@ -732,11 +734,15 @@ else
                 :setPercent(berserkCharge)
                 :setBarColor(Color(255, 255 * inverseCurrent, 255 * inverseCurrent, 255))
                 :draw()
+
+            ---- Overlay ----
+            render.setMaterial(overlay)
+            render.drawTexturedRect(0, 0, sw, sh)
         end)
 
         hook.add("CalcView", "", function(_, ang)
             return {
-                origin = head:getPos() + ang:getForward() * 40,
+                origin = head:getPos() + ang:getForward() * 45,
                 angles = ang,
                 fov = 120
             }
