@@ -36,7 +36,7 @@ do
     INITIAL_DASH_CLAWS_DAMAGE = INITIAL_CLAWS_DAMAGE * 2
 
     ---Berserk required damage. Can be edited
-    BERSERK_REQUIRED_DAMAGE = 1
+    BERSERK_REQUIRED_DAMAGE = 3200
 
     ---Berserk max time
     BERSERK_MAX_TIME = 12
@@ -71,7 +71,8 @@ if SERVER then
             Sound:new("punch", 3, false, "https://www.dl.dropboxusercontent.com/scl/fi/d2995xr0baq1i2zvyk0bn/Punch1.mp3?rlkey=ivlnj2yk9evy6p1o0bfeayz0j&st=o2xj8x1q&dl=1"),
             Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/frw4d1nvdpfqznyucis9r/Ram2.mp3?rlkey=drkc4dj16smf96htpy1yvz9z5&st=bk2xqso6&dl=1"),
             Sound:new("berserkOn", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/ia1vvaup9prouzgobyerq/Adrenaline.mp3?rlkey=6wc1w1u8hfckilokdgmv0o2nj&st=ghw7srrn&dl=1"),
-            Sound:new("berserkOff", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/q8iqb5l85g21sivuu8hhg/AdrenalineStop.mp3?rlkey=4ienb5o38ix1osyp4zuqi6uw0&st=2q9zm4sq&dl=1")
+            Sound:new("berserkOff", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/q8iqb5l85g21sivuu8hhg/AdrenalineStop.mp3?rlkey=4ienb5o38ix1osyp4zuqi6uw0&st=2q9zm4sq&dl=1"),
+            Sound:new("berserkLoop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/u61ky5sum5em1z0h9q98s/Energy4.wav?rlkey=pyg5cfqx3y10hhuqjxrrb14hh&st=b1v8aa6z&dl=1")
         )
     end)
 
@@ -577,6 +578,9 @@ if SERVER then
                 laserOn()
             -- Berserk: F
             elseif key == KEY.F and BERSERK_DAMAGE >= BERSERK_REQUIRED_DAMAGE then
+                astrosounds.play("berserkOn", Vector(), body.base[1])
+                astrosounds.play("berserkLoop", Vector(), body.base[1])
+                astrosounds.stop("loop")
                 BERSERK_TIME = BERSERK_MAX_TIME
                 BERSERK_DAMAGE = 0
                 laser:setDamage(INITIAL_LASER_DAMAGE * BERSERK.DAMAGE)
@@ -616,8 +620,14 @@ if SERVER then
         net.writeInt(math.round((BERSERK_TIME / BERSERK_MAX_TIME) * 100), 8)
         net.send(find.allPlayers())
         if BERSERK_TIME <= 0 then
+            astrosounds.play("berserkOff", Vector(), body.base[1])
+            astrosounds.play("loop", Vector(), body.base[1])
+            astrosounds.stop("berserkLoop")
             laser:setDamage(INITIAL_LASER_DAMAGE)
             laser:setDamageRadius(INITIAL_LASER_RADIUS)
+            for _, holo in ipairs(body.base.berserkTrails) do
+                holo:removeTrails()
+            end
             BERSERK_TIME = 0
         end
     end)
