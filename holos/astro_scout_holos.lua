@@ -55,7 +55,11 @@ body = {
             Holo(SubHolo(Vector(-22,22,15),Angle(5,130,-45),"models/Gibs/helicopter_brokenpiece_03.mdl",Vector(1),false,Color(255,40,40))),
             Holo(SubHolo(Vector(0,30,15),Angle(5,85,-45),"models/Gibs/helicopter_brokenpiece_03.mdl",Vector(1),false,Color(255,40,40))),
             Holo(SubHolo(Vector(22,22,15),Angle(5,40,-45),"models/Gibs/helicopter_brokenpiece_03.mdl",Vector(1),false,Color(255,40,40)))
-        )
+        ),
+        berserkTrails = {
+            Rig(Vector(0, 75, 45)),
+            Rig(Vector(0, -75, 45))
+        }
     },
     head = hologram.createPart(
         Holo(Rig(Vector(0,0,68))),

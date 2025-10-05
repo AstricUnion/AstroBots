@@ -34,6 +34,12 @@ do
 
     ---Initial dash claws damage. Can be edited
     INITIAL_DASH_CLAWS_DAMAGE = INITIAL_CLAWS_DAMAGE * 2
+
+    ---Berserk required damage. Can be edited
+    BERSERK_REQUIRED_DAMAGE = 1
+
+    ---Berserk max time
+    BERSERK_MAX_TIME = 12
 end
 
 
@@ -47,7 +53,9 @@ if SERVER then
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_scout_holos.lua as astroholos
-    require("astroholos")
+    --@include astricunion/bots/holos/astro_scout_holos.lua
+    -- require("astroholos")
+    require("astricunion/bots/holos/astro_scout_holos.lua")
 
 
     -- Preload sounds
@@ -61,7 +69,9 @@ if SERVER then
             Sound:new("laserShoot", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/iduvkgjwg3cx9qb5kufuw/LaserShoot.mp3?rlkey=z5n1lk07izc6tcuiu8z5gwxvk&st=ktpvv7yx&dl=1"),
             Sound:new("punchClaws", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/3f7oso26jt98njb8rlwtc/Swing.mp3?rlkey=o7z0mgtp5p0hvlhfanwnlr1u5&st=9hmmjpds&dl=1"),
             Sound:new("punch", 3, false, "https://www.dl.dropboxusercontent.com/scl/fi/d2995xr0baq1i2zvyk0bn/Punch1.mp3?rlkey=ivlnj2yk9evy6p1o0bfeayz0j&st=o2xj8x1q&dl=1"),
-            Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/frw4d1nvdpfqznyucis9r/Ram2.mp3?rlkey=drkc4dj16smf96htpy1yvz9z5&st=bk2xqso6&dl=1")
+            Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/frw4d1nvdpfqznyucis9r/Ram2.mp3?rlkey=drkc4dj16smf96htpy1yvz9z5&st=bk2xqso6&dl=1"),
+            Sound:new("berserkOn", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/ia1vvaup9prouzgobyerq/Adrenaline.mp3?rlkey=6wc1w1u8hfckilokdgmv0o2nj&st=ghw7srrn&dl=1"),
+            Sound:new("berserkOff", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/q8iqb5l85g21sivuu8hhg/AdrenalineStop.mp3?rlkey=4ienb5o38ix1osyp4zuqi6uw0&st=2q9zm4sq&dl=1")
         )
     end)
 
@@ -139,6 +149,10 @@ if SERVER then
     arms.rightarm[1]:setParent(body.rightarm[1])
     arms.rightarm[2]:setParent(body.rightarm[2])
     arms.rightarm[3]:setParent(body.rightarm[3])
+
+    for _, holo in ipairs(body.base.berserkTrails) do
+        holo:setParent(body.base[2])
+    end
 
     body.base[2]:setLocalAngularVelocity(Angle(0, 200, 0))
     body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200))
@@ -333,30 +347,40 @@ if SERVER then
 
 
     local LASER_CONTROL = false
+    local ON_ANIMATION
+    local OFF_ANIMATION
 
     -- Laser animation
     local function laserOn()
-        local arm1ang = body.leftarm[1]:getLocalAngles()
-        local arm2ang = body.leftarm.laser[1]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
+        local arm1ang
+        local arm2ang
+        local baseang
         astro:setState(STATES.Laser)
         astrosounds.stop("laserEnd")
         astrosounds.play("laserStart", Vector(), body.leftarm.laser[3])
-        FTimer:new(0.75, 1, {
-            ["0-1"] = function(f, _, fraction)
-                if astro:getState() ~= STATES.Laser then f:remove() end
+        if OFF_ANIMATION then
+            OFF_ANIMATION:remove()
+        end
+        ON_ANIMATION = FTimer:new(0.75, 1, {
+            [0] = function()
+                arm1ang = body.leftarm[1]:getLocalAngles()
+                arm2ang = body.leftarm.laser[1]:getLocalAngles()
+                baseang = body.base[1]:getLocalAngles()
+            end,
+            ["0-1"] = function(_, _, fraction)
                 body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * fraction)))
                 local smoothed = math.easeInOutCubic(fraction)
-                local res = astro:eyeTrace()
                 body.base[1]:setLocalAngles(baseang - (Angle(0, 30, -10) - baseang) * smoothed)
+                body.leftarm.laser[1]:setLocalAngles(arm2ang + ( - arm2ang) * smoothed)
+                local res = astro:eyeTrace()
+                if !res then return end
                 body.leftarm[1]:setLocalAngles(
                     arm1ang + (
                         body.base[1]:worldToLocalAngles(
                             (res.HitPos - body.leftarm[1]:getPos()):getAngle()
-                        ) - arm1ang
+                        ) * smoothed - arm1ang
                     ) * smoothed
                 )
-                body.leftarm.laser[1]:setLocalAngles(arm2ang + ( - arm2ang) * smoothed)
             end,
             [1] = function()
                 laser:start()
@@ -376,12 +400,12 @@ if SERVER then
         astrosounds.stop("laserLoop")
         astrosounds.stop("laserShoot")
         astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
-        astro:setState(STATES.Idle)
-        FTimer:new(0.75, 1, {
+        if ON_ANIMATION then
+            ON_ANIMATION:remove()
+        end
+        OFF_ANIMATION = FTimer:new(0.75, 1, {
             ["0-1"] = function(_, _, fraction)
                 body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * (1 - fraction))))
-            end,
-            ["0.3-1"] = function(_, _, fraction)
                 local smoothed = math.easeInOutCubic(fraction)
                 body.base[1]:setLocalAngles(baseang - baseang * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
@@ -389,6 +413,7 @@ if SERVER then
             end,
             [1] = function()
                 LASER_CONTROL = false
+                astro:setState(STATES.Idle)
             end
         })
     end
@@ -551,11 +576,18 @@ if SERVER then
             elseif key == KEY.R then
                 laserOn()
             -- Berserk: F
-            elseif key == KEY.F and BERSERK_DAMAGE >= 3200 then
-                BERSERK_TIME = 12
+            elseif key == KEY.F and BERSERK_DAMAGE >= BERSERK_REQUIRED_DAMAGE then
+                BERSERK_TIME = BERSERK_MAX_TIME
                 BERSERK_DAMAGE = 0
                 laser:setDamage(INITIAL_LASER_DAMAGE * BERSERK.DAMAGE)
                 laser:setDamageRadius(INITIAL_LASER_RADIUS * BERSERK.RADIUS)
+                for _, holo in ipairs(body.base.berserkTrails) do
+                    holo:setTrails(
+                        64, 0, 1,
+                        "trails/physbeam",
+                        Color(255, 0, 0)
+                    )
+                end
             -- Block: MOUSE WHEEL
             elseif key == MOUSE.MOUSE3 then
                 armBlock()
@@ -581,7 +613,7 @@ if SERVER then
         if BERSERK_TIME == 0 then return end
         BERSERK_TIME = math.round(BERSERK_TIME - 0.01, 2)
         net.start("BerserkStatusUpdate")
-        net.writeInt(math.round((BERSERK_TIME / 12) * 100), 8)
+        net.writeInt(math.round((BERSERK_TIME / BERSERK_MAX_TIME) * 100), 8)
         net.send(find.allPlayers())
         if BERSERK_TIME <= 0 then
             laser:setDamage(INITIAL_LASER_DAMAGE)
@@ -603,16 +635,16 @@ if SERVER then
     hook.add("PostEntityTakeDamage", "Health", function(target, _, _, amount)
         if target == astro.body then
             local state = astro:getState()
-            if BERSERK_TIME == 0 and BERSERK_DAMAGE < 3200 then
+            if BERSERK_TIME == 0 and BERSERK_DAMAGE < BERSERK_REQUIRED_DAMAGE then
                 BERSERK_DAMAGE = math.clamp(
                     BERSERK_DAMAGE
                       + amount
                       * (state == STATES.Block and 1.2 or 1),
                     0,
-                    3200
+                    BERSERK_REQUIRED_DAMAGE
                 )
                 net.start("BerserkStatusUpdate")
-                net.writeInt(math.round((BERSERK_DAMAGE / 3200) * 100), 8)
+                net.writeInt(math.round((BERSERK_DAMAGE / BERSERK_REQUIRED_DAMAGE) * 100), 8)
                 net.send(find.allPlayers())
             end
             amount = amount * (state == STATES.Block and 0.6 or 1)
@@ -701,6 +733,10 @@ else
         hook.add("DrawHUD", "", function()
             local sw, sh = render.getGameResolution()
 
+            ---- Overlay ----
+            -- render.setMaterial(overlay)
+            -- render.drawTexturedRect(0, 0, sw, sh)
+
             ---- Aim ----
             render.drawCircle(sw / 2, sh / 2, 1)
 
@@ -734,10 +770,6 @@ else
                 :setPercent(berserkCharge)
                 :setBarColor(Color(255, 255 * inverseCurrent, 255 * inverseCurrent, 255))
                 :draw()
-
-            ---- Overlay ----
-            render.setMaterial(overlay)
-            render.drawTexturedRect(0, 0, sw, sh)
         end)
 
         hook.add("CalcView", "", function(_, ang)
