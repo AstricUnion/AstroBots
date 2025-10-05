@@ -53,9 +53,7 @@ if SERVER then
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_scout_holos.lua as astroholos
-    --@include astricunion/bots/holos/astro_scout_holos.lua
-    -- require("astroholos")
-    require("astricunion/bots/holos/astro_scout_holos.lua")
+    require("astroholos")
 
 
     -- Preload sounds
