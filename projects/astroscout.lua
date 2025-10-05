@@ -163,6 +163,7 @@ if SERVER then
 
     local arms_list = table.add(arms.rightarm, arms.leftarm)
     for _, v in ipairs(arms_list) do
+        v:setMass(100)
         laser:addIgnore(v)
         astro:addIgnore(v)
     end
@@ -197,7 +198,7 @@ if SERVER then
     local function attackDamage(min, max, direction, damage, inflictor)
         local entsToDamage = find.inBox(min, max)
         for _, ent in ipairs(entsToDamage) do
-            if ent == astro.body or ent == astro.head then continue end
+            if ent == astro.body then continue end
             if isValid(ent) and ent:isValidPhys() then
                 local velocityPermitted, _ = hasPermission("entities.setVelocity", ent)
                 if velocityPermitted and game.getTickCount() % 2 == 0 and isValid(ent) then
@@ -588,7 +589,7 @@ if SERVER then
         end
     end)
 
-    hook.add("PostEntityTakeDamage", "ClawsHeal", function(target, _, inflictor, amount)
+    hook.add("PostEntityTakeDamage", "ClawsHeal", function(_, _, inflictor, amount)
         if inflictor == arms.rightarm[2] then
             astro:damage(amount * -0.15)
             net.start("AstroHealthUpdate")
@@ -623,14 +624,42 @@ if SERVER then
 
                 -- Remove animation
                 IdleAnimation:remove()
-                laserOff()
+                laser:stop()
                 body.base[2]:setLocalAngularVelocity(Angle())
-                body.leftarm.laser[2]:setLocalAngularVelocity(Angle())
                 body.leftarm.laser[3]:setLocalAngularVelocity(Angle())
+                body.leftarm.laser[2]:setLocalAngularVelocity(Angle())
 
                 -- Remove lights
                 removeLight("Main")
                 removeLight("Underglow")
+
+                -- Remove sound
+                astrosounds.stop("loop")
+                astrosounds.stop("laserLoop")
+                astrosounds.stop("laserShoot")
+
+                -- Remove arms
+                local delete = {
+                    {arms.leftarm[1], body.leftarm[1]},
+                    {arms.leftarm[2], body.leftarm.laser[1]},
+                    {arms.rightarm[1], body.rightarm[1]},
+                    {arms.rightarm[2], body.rightarm[2]},
+                }
+                for _, to in ipairs(delete) do
+                    local pos = to[1]:getPos()
+                    local angs = to[1]:getAngles()
+                    to[1]:setParent(nil)
+                    to[1]:setAngles(angs)
+                    to[1]:setPos(pos)
+                    to[2]:setParent(to[1])
+                    to[1]:setFrozen(false)
+                    local eff = effect.create()
+                    eff:setOrigin(pos)
+                    eff:setScale(0.01)
+                    eff:setMagnitude(0.01)
+                    eff:play("explosion")
+                    to[1]:emitSound("weapons/underwater_explode3.wav")
+                end
             end)
             net.start("AstroHealthUpdate")
             net.writeInt(astro.health, 16)
