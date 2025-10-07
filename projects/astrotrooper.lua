@@ -7,7 +7,6 @@
 require("light")
 local astrosounds = require("sounds")
 
-
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
@@ -90,6 +89,9 @@ if SERVER then
     body.base[2]:setLocalAngularVelocity(Angle(0, 200, 0))
     body.base[3]:setLocalAngularVelocity(Angle(0, -200, 0))
     body.base[4]:setLocalAngularVelocity(Angle(0, 200, 0))
+
+    -- Unfreeze it
+    astro.body:setFrozen(false)
 
 
     -- Idle animation --
@@ -323,7 +325,6 @@ else
     local blasterLeftBar
     local blasterRightBar
     local head
-    local overlay = material.load("effects/combine_binocoverlay")
 
     local function createHud()
         hook.add("DrawHUD", "", function()
@@ -364,10 +365,6 @@ else
                 blasterRightBar:setLabelRight(tostring(blasterRightHealth) .. "%")
                 blasterRightBar:draw()
             end
-
-            ---- Overlay ----
-            render.setMaterial(overlay)
-            render.drawTexturedRect(0, 0, sw, sh)
         end)
 
         hook.add("CalcView", "", function(_, ang)

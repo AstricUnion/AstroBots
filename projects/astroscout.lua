@@ -721,7 +721,6 @@ else
     require("ui")
 
     local head
-    local overlay = material.load("effects/combine_binocoverlay")
 
     ---@type Bar
     local laserBar
@@ -740,11 +739,6 @@ else
     local function createHud()
         hook.add("DrawHUD", "", function()
             local sw, sh = render.getGameResolution()
-
-            ---- Overlay ----
-            -- render.setMaterial(overlay)
-            -- render.drawTexturedRect(0, 0, sw, sh)
-
             ---- Aim ----
             render.drawCircle(sw / 2, sh / 2, 1)
 
