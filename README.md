@@ -1,8 +1,12 @@
 # 🤖 AstroBots
 There are our main projects and holograms
 
+
 > [!IMPORTANT]
 > Chips works on Garry's Mod addon 🌟 [StarfallEX](https://github.com/thegrb93/StarfallEx/tree/master) - chips like Expression2, but in Lua
+
+> [!WARNING]
+> Chips is in work, so I recommend to not use it on this step
 
 # 📄 Information
 ## About our projects
