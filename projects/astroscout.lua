@@ -1,4 +1,4 @@
---@name AstroScout (BETA)
+--@name AstroScout
 --@author AstricUnion
 --@shared
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
@@ -396,14 +396,16 @@ if SERVER then
         local baseang = body.base[1]:getLocalAngles()
         laser:stop()
         astrosounds.stop("laserStart")
-        astrosounds.stop("laserLoop")
-        astrosounds.stop("laserShoot")
-        astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
         if ON_ANIMATION then
             ON_ANIMATION:remove()
         end
         OFF_ANIMATION = FTimer:new(0.75, 1, {
-            ["0-1"] = function(_, _, fraction)
+            [0.25] = function()
+                astrosounds.stop("laserShoot")
+                astrosounds.stop("laserLoop")
+                astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
+            end,
+            ["0.3-1"] = function(_, _, fraction)
                 body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * (1 - fraction))))
                 local smoothed = math.easeInOutCubic(fraction)
                 body.base[1]:setLocalAngles(baseang - baseang * smoothed)
