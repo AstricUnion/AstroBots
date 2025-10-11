@@ -185,13 +185,12 @@ if SERVER then
         )
     end
 
-    hook.add("KeyPress", "Controls", function(ply, key)
-        local dr = seat:getDriver()
-        if ply ~= dr then return end
+    hook.add("InputPressed", "Controls", function(ply, key)
+        if ply ~= astro.driver then return end
         if astro.state ~= STATES.Idle then return end
 
         -- MOUSE1: Blaster
-        if key == IN_KEY.ATTACK then
+        if key == MOUSE.MOUSE1 then
             -- извиняюсь перед чувствами всех программистов
             if blaster.left:isAlive() and blaster.right:isAlive() then
                 if blaster.left.ammo == blaster.right.ammo then
@@ -209,7 +208,7 @@ if SERVER then
             -- вы приняли извинения :D
 
         -- Mouse2: Dash --
-        elseif key == IN_KEY.ATTACK2 and can_dash then
+        elseif key == MOUSE.MOUSE2 and can_dash then
             can_dash = false
             astro.state = STATES.Dash
             local velocity = 30000

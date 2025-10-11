@@ -4,6 +4,8 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
+require("astrobase")
 require("light")
 require("guns")
 local astrosounds = require("sounds")
@@ -46,9 +48,7 @@ end
 
 CHIPPOS = chip():getPos()
 if SERVER then
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    require("astrobase")
     require("ftimers")
 
     -- THIS FILE CREATES HOLOGRAMS --
@@ -564,8 +564,8 @@ if SERVER then
     end)
 
 
-    net.receive("pressed", function()
-        local key = net.readInt(32)
+    hook.add("InputPressed", "", function(ply, key)
+        if ply ~= astro.driver then return end
         if astro:getState() == STATES.Idle and !LASER_CONTROL then
             -- Weak punch: MOUSE1
             if key == MOUSE.MOUSE1 then
@@ -602,8 +602,8 @@ if SERVER then
         end
     end)
 
-    net.receive("released", function()
-        local key = net.readInt(32)
+    hook.add("InputReleased", "", function(ply, key)
+        if ply ~= astro.driver then return end
         local st = astro:getState()
         if key == KEY.R and st == STATES.Laser then
             laserOff()
@@ -660,10 +660,11 @@ if SERVER then
             amount = amount * (state == STATES.Block and 0.6 or 1)
             astro:damage(amount, function()
                 -- Remove hooks
-                hook.remove("EntityTakeDamage", "DriverDefense")
                 hook.remove("Think", "Movement")
                 hook.remove("PostEntityTakeDamage", "health")
+                hook.remove("PostEntityTakeDamage", "ClawsHeal")
                 timer.remove("increaseLaser")
+                timer.remove("BerserkDecrease")
 
                 -- Remove animation
                 IdleAnimation:remove()
@@ -783,27 +784,11 @@ else
                 fov = 120
             }
         end)
-
-        hook.add("InputPressed", "", function(key)
-            if input.getCursorVisible() then return end
-            net.start("pressed")
-            net.writeInt(key, 32)
-            net.send()
-        end)
-
-        hook.add("InputReleased", "", function(key)
-            if input.getCursorVisible() then return end
-            net.start("released")
-            net.writeInt(key, 32)
-            net.send()
-        end)
     end
 
     local function removeHud()
         hook.remove("DrawHUD", "")
         hook.remove("CalcView", "")
-        hook.remove("InputPressed", "")
-        hook.remove("InputReleased", "")
     end
 
     net.receive("OnEnter", function()

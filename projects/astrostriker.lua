@@ -41,6 +41,66 @@ if SERVER then
     body.rightarm[1]:setLocalAngles(Angle(40, -120, -120))
     body.rightarm[2]:setLocalAngles(Angle(-100, 0, 0))
 
+    local function clawsAttackSwing()
+        local arm1ang
+        local arm2ang
+        local baseang
+        return function(_, _, fraction)
+            if math.floor(fraction * 10) == 0 then
+                arm1ang = body.rightarm[1]:getLocalAngles()
+                arm2ang = body.rightarm[2]:getLocalAngles()
+                baseang = body.base[1]:getLocalAngles()
+            end
+            local smoothed = math.easeOutCubic(fraction)
+            body.base[1]:setLocalAngles(baseang + (Angle(0, -80, 0) - baseang) * smoothed)
+            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(-50, -80, 0) - arm1ang) * smoothed)
+            body.rightarm[2]:setLocalAngles(arm2ang + (- arm2ang) * smoothed)
+        end
+    end
+
+    local function clawsAttackPunch(damage)
+        local arm1ang
+        local baseang
+        return function(_, _, fraction)
+            if math.floor(fraction * 10) == 0 then
+                arm1ang = body.rightarm[1]:getLocalAngles()
+                baseang = body.base[1]:getLocalAngles()
+            end
+            local smoothed = math.easeOutCubic(fraction)
+            body.base[1]:setLocalAngles(baseang + (Angle(0, 60, -5) - baseang) * smoothed)
+            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(20, 20, 0) - arm1ang) * smoothed)
+        end
+    end
+
+    local function clawsAttackReturn()
+        local arm1ang
+        local arm2ang
+        local baseang
+        return function(_, _, fraction)
+            if math.floor(fraction * 10) == 0 then
+                arm1ang = body.rightarm[1]:getLocalAngles()
+                arm2ang = body.rightarm[2]:getLocalAngles()
+                baseang = body.base[1]:getLocalAngles()
+            end
+            local smoothed = math.easeInOutQuad(fraction)
+            body.base[1]:setLocalAngles(baseang + (- baseang) * smoothed)
+            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(40, -120, -120) - arm1ang) * smoothed)
+            body.rightarm[2]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
+        end
+    end
+
+    local function clawsAttack()
+        astro:setState(STATES.Attack)
+        astrosounds.play("punchClaws", Vector(), body.rightarm[2])
+        FTimer:new(1, 1, {
+            ["0-0.4"] = clawsAttackSwing(),
+            ["0.4-0.5"] = clawsAttackPunch(INITIAL_CLAWS_DAMAGE),
+            ["0.6-1"] = clawsAttackReturn(),
+            [1] = function()
+                astro:setState(STATES.Idle)
+            end
+        })
+    end
 
     -- Movement think --
     hook.add("Think", "Movement", function()
