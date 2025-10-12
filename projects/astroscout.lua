@@ -5,7 +5,7 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
-require("astrobase")
+require("astrobase.lua")
 require("light")
 require("guns")
 local astrosounds = require("sounds")
@@ -110,6 +110,7 @@ if SERVER then
         head_hitbox,
         seat,
         INITIAL_HEALTH,
+        Vector(42, 0, 0),
         INITIAL_SPEED,
         INITIAL_SPRINT
     )
@@ -187,24 +188,24 @@ if SERVER then
     IdleAnimation = FTimer:new(4, -1, {
         [0] = function()
             base_pos = body.base[1]:getLocalPos()
-            head_pos = body.head:getLocalPos()
+            head_pos = astro.head:getLocalPos()
         end,
         ["0-1"] = function(_, _, fraction)
             local rads = math.rad(360 * fraction)
             local smoothed_x = math.sin(rads)
             local smoothed_y = math.cos(rads)
             body.base[1]:setLocalPos(base_pos + Vector(smoothed_x * 3, 0, smoothed_y * 3))
-            body.head:setLocalPos(head_pos + Vector(smoothed_x * 2, 0, smoothed_y * 2))
+            astro.head:setLocalPos(head_pos + Vector(smoothed_x * 2, 0, smoothed_y * 2))
         end,
         ["0-0.5"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(fraction)
             body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 2))
-            body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 3))
+            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 3))
         end,
         ["0.5-1"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(1 - fraction)
             body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 2))
-            body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 3))
+            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 3))
         end
     })
 
@@ -231,11 +232,14 @@ if SERVER then
         local arm2ang = body.rightarm[2]:getLocalAngles()
         local arm3ang = body.rightarm[3]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
+        local cameraang = astro.cameraPin:getLocalAngles()
         astro:setState(STATES.Attack)
         astrosounds.play("punch", Vector(), body.rightarm[2])
         FTimer:new(0.5, 1, {
             ["0-0.3"] = function(_, _, fraction)
-                local smoothed = math.easeOutQuint(fraction) body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
+                local smoothed = math.easeOutQuint(fraction)
+                body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
+                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, -1, 1) - cameraang) * smoothed)
             end,
             ["0.3-0.6"] = function(_, _, fraction)
                 local smoothed = math.easeOutQuint(fraction)
@@ -243,6 +247,7 @@ if SERVER then
                 body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
                 body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
                 body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
+                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, 1, -1) - cameraang) * smoothed)
                 local armPos = body.rightarm[3]:getPos()
                 local armForward = body.rightarm[3]:getForward()
                 local armUp = body.rightarm[3]:getUp()
@@ -262,6 +267,7 @@ if SERVER then
                 body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
                 body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
                 body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
+                astro.cameraPin:setLocalAngles(cameraang - cameraang * smoothed)
             end,
             [1] = function()
                 astro:setState(STATES.Idle)
@@ -274,30 +280,36 @@ if SERVER then
         local arm1ang
         local arm2ang
         local baseang
+        local cameraang
         return function(_, _, fraction)
             if math.floor(fraction * 10) == 0 then
                 arm1ang = body.rightarm[1]:getLocalAngles()
                 arm2ang = body.rightarm[2]:getLocalAngles()
                 baseang = body.base[1]:getLocalAngles()
+                cameraang = astro.cameraPin:getLocalAngles()
             end
             local smoothed = math.easeOutCubic(fraction)
             body.base[1]:setLocalAngles(baseang + (Angle(0, -80, 0) - baseang) * smoothed)
             body.rightarm[1]:setLocalAngles(arm1ang + (Angle(-50, -80, 0) - arm1ang) * smoothed)
             body.rightarm[2]:setLocalAngles(arm2ang + (- arm2ang) * smoothed)
+            astro.cameraPin:setLocalAngles(cameraang + (Angle(0, -3, 1) - cameraang) * smoothed)
         end
     end
 
     local function clawsAttackPunch(damage)
         local arm1ang
         local baseang
+        local cameraang
         return function(_, _, fraction)
             if math.floor(fraction * 10) == 0 then
                 arm1ang = body.rightarm[1]:getLocalAngles()
                 baseang = body.base[1]:getLocalAngles()
+                cameraang = astro.cameraPin:getLocalAngles()
             end
             local smoothed = math.easeOutCubic(fraction)
             body.base[1]:setLocalAngles(baseang + (Angle(0, 60, -5) - baseang) * smoothed)
             body.rightarm[1]:setLocalAngles(arm1ang + (Angle(20, 20, 0) - arm1ang) * smoothed)
+            astro.cameraPin:setLocalAngles(cameraang + (Angle(0, 3, -1) - cameraang) * smoothed)
             local armPos = body.rightarm[3]:getPos()
             local armForward = body.rightarm[3]:getForward()
             local armUp = body.rightarm[3]:getUp()
@@ -318,16 +330,19 @@ if SERVER then
         local arm1ang
         local arm2ang
         local baseang
+        local cameraang
         return function(_, _, fraction)
             if math.floor(fraction * 10) == 0 then
                 arm1ang = body.rightarm[1]:getLocalAngles()
                 arm2ang = body.rightarm[2]:getLocalAngles()
                 baseang = body.base[1]:getLocalAngles()
+                cameraang = astro.cameraPin:getLocalAngles()
             end
             local smoothed = math.easeInOutQuad(fraction)
             body.base[1]:setLocalAngles(baseang + (- baseang) * smoothed)
             body.rightarm[1]:setLocalAngles(arm1ang + (Angle(40, -120, -120) - arm1ang) * smoothed)
             body.rightarm[2]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
+            astro.cameraPin:setLocalAngles(cameraang - cameraang * smoothed)
         end
     end
 
@@ -351,21 +366,19 @@ if SERVER then
 
     -- Laser animation
     local function laserOn()
-        local arm1ang
-        local arm2ang
-        local baseang
+        local arm1ang = body.leftarm[1]:getLocalAngles()
+        local arm2ang = body.leftarm.laser[1]:getLocalAngles()
+        local baseang = body.base[1]:getLocalAngles()
+        local cameraang = astro.cameraPin:getLocalAngles()
         astro:setState(STATES.Laser)
         astrosounds.stop("laserEnd")
         astrosounds.play("laserStart", Vector(), body.leftarm.laser[3])
+        if ON_ANIMATION then return end
         if OFF_ANIMATION then
             OFF_ANIMATION:remove()
+            OFF_ANIMATION = nil
         end
-        ON_ANIMATION = FTimer:new(0.75, 1, {
-            [0] = function()
-                arm1ang = body.leftarm[1]:getLocalAngles()
-                arm2ang = body.leftarm.laser[1]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-            end,
+        ON_ANIMATION = FTimer:new(0.5, 1, {
             ["0-1"] = function(_, _, fraction)
                 body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * fraction)))
                 local smoothed = math.easeInOutCubic(fraction)
@@ -380,11 +393,13 @@ if SERVER then
                         ) * smoothed - arm1ang
                     ) * smoothed
                 )
+                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, 0, 1) - cameraang) * smoothed)
             end,
             [1] = function()
                 laser:start()
                 astrosounds.play("laserShoot", Vector(), body.leftarm.laser[3])
                 LASER_CONTROL = true
+                ON_ANIMATION = nil
             end
         })
     end
@@ -394,13 +409,16 @@ if SERVER then
         local arm1ang = body.leftarm[1]:getLocalAngles()
         local arm2ang = body.leftarm.laser[1]:getLocalAngles()
         local baseang = body.base[1]:getLocalAngles()
+        local cameraang = astro.cameraPin:getLocalAngles()
         laser:stop()
         astrosounds.stop("laserStart")
+        if OFF_ANIMATION then return end
         if ON_ANIMATION then
             ON_ANIMATION:remove()
+            ON_ANIMATION = nil
         end
         OFF_ANIMATION = FTimer:new(0.75, 1, {
-            [0.25] = function()
+            [0.3] = function()
                 astrosounds.stop("laserShoot")
                 astrosounds.stop("laserLoop")
                 astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
@@ -411,10 +429,12 @@ if SERVER then
                 body.base[1]:setLocalAngles(baseang - baseang * smoothed)
                 body.leftarm.laser[1]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
                 body.leftarm[1]:setLocalAngles(arm1ang + (Angle(40, 120, 120) - arm1ang) * smoothed)
+                astro.cameraPin:setLocalAngles(cameraang - cameraang * smoothed)
             end,
             [1] = function()
                 LASER_CONTROL = false
                 astro:setState(STATES.Idle)
+                OFF_ANIMATION = nil
             end
         })
     end
@@ -635,9 +655,6 @@ if SERVER then
     hook.add("PostEntityTakeDamage", "ClawsHeal", function(_, _, inflictor, amount)
         if inflictor == arms.rightarm[2] then
             astro:damage(amount * -0.15)
-            net.start("AstroHealthUpdate")
-            net.writeInt(math.clamp(astro.health, 0, INITIAL_HEALTH), 16)
-            net.send(find.allPlayers())
         end
     end)
 
@@ -705,9 +722,6 @@ if SERVER then
                     to[1]:emitSound("weapons/underwater_explode3.wav")
                 end
             end)
-            net.start("AstroHealthUpdate")
-            net.writeInt(astro.health, 16)
-            net.send(find.allPlayers())
         end
     end)
 
@@ -723,8 +737,6 @@ else
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
     require("ui")
 
-    local head
-
     ---@type Bar
     local laserBar
     ---@type Bar
@@ -732,14 +744,12 @@ else
     ---@type Bar
     local berserkBar
     ---@type number
-    local astroHealth = INITIAL_HEALTH
-    ---@type number
     local laserCharge = 1
     ---@type number
     local berserkCharge = 0
 
 
-    local function createHud()
+    local function createHud(camerapoint, body)
         hook.add("DrawHUD", "", function()
             local sw, sh = render.getGameResolution()
             ---- Aim ----
@@ -760,8 +770,8 @@ else
                     :setLabelLeft("HP")
             end
             local current = healthBar.current_percent
-            healthBar:setLabelRight(tostring(astroHealth) .. "%")
-                :setPercent(astroHealth / INITIAL_HEALTH)
+            healthBar:setLabelRight(tostring(body:getHealth()) .. "%")
+                :setPercent(body:getHealth() / INITIAL_HEALTH)
                 :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
                 :draw()
 
@@ -769,8 +779,7 @@ else
             if !berserkBar then
                 berserkBar = Bar:new(sw / 2 - 100, sh * 0.7, 200, 30, 0)
                     :setLabelLeft("BERSERK")
-            end
-            local inverseCurrent = 1 - berserkCharge
+            end local inverseCurrent = 1 - berserkCharge
             berserkBar:setLabelRight(tostring(berserkCharge * 100) .. "%")
                 :setPercent(berserkCharge)
                 :setBarColor(Color(255, 255 * inverseCurrent, 255 * inverseCurrent, 255))
@@ -779,8 +788,8 @@ else
 
         hook.add("CalcView", "", function(_, ang)
             return {
-                origin = head:getPos() + ang:getForward() * 45,
-                angles = ang,
+                origin = camerapoint:getPos(),
+                angles = ang + camerapoint:getLocalAngles(),
                 fov = 120
             }
         end)
@@ -791,24 +800,8 @@ else
         hook.remove("CalcView", "")
     end
 
-    net.receive("OnEnter", function()
-        net.readEntity(function(ent) head = ent end)
-        timer.simple(0.1, function()
-            enableHud(nil, true)
-            createHud()
-        end)
-    end)
-
-    net.receive("OnLeave", function()
-        timer.simple(0.1, function()
-            enableHud(nil, false)
-            removeHud()
-        end)
-    end)
-
-    net.receive("AstroHealthUpdate", function()
-        astroHealth = net.readInt(16)
-    end)
+    hook.add("AstroEntered", "", createHud)
+    hook.add("AstroLeft", "", removeHud)
 
     net.receive("LaserChargeUpdate", function()
         laserCharge = net.readFloat()

@@ -1,11 +1,11 @@
 --@name AstroStriker (WIP)
 --@author AstricUnion
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
+require("astrobase")
 
 
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    require("astrobase")
     require("ftimers")
 
     -- THIS FILE CREATES HOLOGRAMS --
@@ -41,6 +41,33 @@ if SERVER then
     body.rightarm[1]:setLocalAngles(Angle(40, -120, -120))
     body.rightarm[2]:setLocalAngles(Angle(-100, 0, 0))
 
+    -- Idle animation
+    local base_pos
+    local head_pos
+    IdleAnimation = FTimer:new(4, -1, {
+        [0] = function()
+            base_pos = body.base[1]:getLocalPos()
+            head_pos = body.head[1]:getLocalPos()
+        end,
+        ["0-1"] = function(_, _, fraction)
+            local rads = math.rad(360 * fraction)
+            local smoothed_x = math.sin(rads)
+            local smoothed_y = math.cos(rads)
+            body.base[1]:setLocalPos(base_pos + Vector(smoothed_x * 3, 0, smoothed_y * 3))
+            body.head[1]:setLocalPos(head_pos + Vector(smoothed_x * 2, 0, smoothed_y * 2))
+        end,
+        ["0-0.5"] = function(_, _, fraction)
+            local smoothed = math.easeInOutSine(fraction)
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 2))
+            body.head[1]:setLocalAngles(body.head[1]:getLocalAngles():setP(smoothed * 3))
+        end,
+        ["0.5-1"] = function(_, _, fraction)
+            local smoothed = math.easeInOutSine(1 - fraction)
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 2))
+            body.head[1]:setLocalAngles(body.head[1]:getLocalAngles():setP(smoothed * 3))
+        end
+    })
+
     local function clawsAttackSwing()
         local arm1ang
         local arm2ang
@@ -58,7 +85,7 @@ if SERVER then
         end
     end
 
-    local function clawsAttackPunch(damage)
+    local function clawsAttackPunch()
         local arm1ang
         local baseang
         return function(_, _, fraction)
@@ -90,11 +117,9 @@ if SERVER then
     end
 
     local function clawsAttack()
-        astro:setState(STATES.Attack)
-        astrosounds.play("punchClaws", Vector(), body.rightarm[2])
         FTimer:new(1, 1, {
             ["0-0.4"] = clawsAttackSwing(),
-            ["0.4-0.5"] = clawsAttackPunch(INITIAL_CLAWS_DAMAGE),
+            ["0.4-0.5"] = clawsAttackPunch(),
             ["0.6-1"] = clawsAttackReturn(),
             [1] = function()
                 astro:setState(STATES.Idle)
@@ -107,33 +132,12 @@ if SERVER then
         astro:think()
     end)
 
-
-    -- Idle animation
-    local base_pos
-    local head_pos
-    IdleAnimation = FTimer:new(4, -1, {
-        [0] = function()
-            base_pos = body.base[1]:getLocalPos()
-            head_pos = body.head[1]:getLocalPos()
-        end,
-        ["0-1"] = function(_, _, fraction)
-            local rads = math.rad(360 * fraction)
-            local smoothed_x = math.sin(rads)
-            local smoothed_y = math.cos(rads)
-            body.base[1]:setLocalPos(base_pos + Vector(smoothed_x * 3, 0, smoothed_y * 3))
-            body.head[1]:setLocalPos(head_pos + Vector(smoothed_x * 2, 0, smoothed_y * 2))
-        end,
-        ["0-0.5"] = function(_, _, fraction)
-            local smoothed = math.easeInOutSine(fraction)
-            body.base[1]:setLocalAngles(Angle(smoothed * 2, 0, 0))
-            body.head[1]:setLocalAngles(Angle(smoothed * 3, 0, 0))
-        end,
-        ["0.5-1"] = function(_, _, fraction)
-            local smoothed = math.easeInOutSine(1 - fraction)
-            body.base[1]:setLocalAngles(Angle(smoothed * 2, 0, 0))
-            body.head[1]:setLocalAngles(Angle(smoothed * 3, 0, 0))
+    hook.add("InputPressed", "", function(ply, key)
+        if ply ~= astro.driver then return end
+        if key == MOUSE.MOUSE1 then
+            clawsAttack()
         end
-    })
+    end)
 else
 
     local head

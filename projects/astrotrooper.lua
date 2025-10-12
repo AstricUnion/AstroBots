@@ -4,20 +4,19 @@
 
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
+require("astrobase.lua")
+require("guns")
 require("light")
 local astrosounds = require("sounds")
 
 if SERVER then
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
-    --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
-
-    require("guns")
     require("ftimers")
-    require("astrobase")
 
     -- THIS FILE CREATES HOLOGRAMS --
+    --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
     require("astroholos")
     ---------------------------------
 
@@ -55,7 +54,7 @@ if SERVER then
     local headsize = Vector(12, 12, 12)
     local body_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, -7.5), Angle(), size, true)
     local head_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 25), Angle(), headsize, true)
-    local astro = AstroBase:new(body_hitbox, head_hitbox, seat, 1000)
+    local astro = AstroBase:new(body_hitbox, head_hitbox, seat, 1000, Vector(10, 0, -5))
 
     -- Start sound --
     hook.add("SoundPreloaded", "StartSound", function(name, ply)
@@ -100,24 +99,24 @@ if SERVER then
     IdleAnimation = FTimer:new(4, -1, {
         [0] = function()
             base_pos = body.base[1]:getLocalPos()
-            head_pos = body.head:getLocalPos()
+            head_pos = astro.head:getLocalPos()
         end,
         ["0-1"] = function(_, _, fraction)
             local rads = math.rad(360 * fraction)
             local smoothed_x = math.sin(rads)
             local smoothed_y = math.cos(rads)
             body.base[1]:setLocalPos(base_pos + Vector(smoothed_x, 0, smoothed_y))
-            body.head:setLocalPos(head_pos + Vector(smoothed_x * 0.5, 0, smoothed_y * 0.5))
+            astro.head:setLocalPos(head_pos + Vector(smoothed_x * 0.5, 0, smoothed_y * 0.5))
         end,
         ["0-0.5"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(fraction)
             body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed))
-            body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 0.5))
+            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 0.5))
         end,
         ["0.5-1"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(1 - fraction)
             body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed))
-            body.head:setLocalAngles(body.head:getLocalAngles():setP(smoothed * 0.5))
+            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 0.5))
         end
     })
 
@@ -265,7 +264,7 @@ if SERVER then
 
 
     -- Health hook, blasters and body health --
-    function blasterHealthUpdate(is_left, health)
+    local function blasterHealthUpdate(is_left, health)
         net.start("BlasterHealthUpdate")
         net.writeBool(is_left)
         net.writeInt(health, 10)
@@ -293,10 +292,8 @@ if SERVER then
                 body.base[4]:setLocalAngularVelocity(Angle())
 
                 -- Remove hooks
-                hook.remove("KeyPress", "Controls")
                 hook.remove("Think", "Movement")
                 hook.remove("EntityTakeDamage", "health")
-                hook.remove("EntityTakeDamage", "DriverDefense")
 
                 -- Remove lights
                 removeLight("Main")
@@ -305,9 +302,6 @@ if SERVER then
                 -- Stop loop
                 astrosounds.stop("loop")
             end)
-            net.start("AstroHealthUpdate")
-            net.writeInt(astro.health, 12)
-            net.send(find.allPlayers())
         end
     end)
 
@@ -315,7 +309,6 @@ else
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
     require("ui")
 
-    local astroHealth = 1000
     local blasterLeftAmmo = 4
     local blasterRightAmmo = 4
     local blasterLeftHealth = 500
@@ -323,9 +316,8 @@ else
     local healthBar
     local blasterLeftBar
     local blasterRightBar
-    local head
 
-    local function createHud()
+    local function createHud(camerapoint, body)
         hook.add("DrawHUD", "", function()
             local sw, sh = render.getGameResolution()
 
@@ -333,14 +325,14 @@ else
             render.drawCircle(sw / 2, sh / 2, 1)
 
             ---- HP bar ----
-            local health = astroHealth / 1000
+            local health = body:getHealth() / 1000
             if not healthBar then
                 healthBar = Bar:new(sw / 2 - 100, sh * 0.8, 200, 30, 1)
                     :setLabelLeft("HP")
             end
             local current = healthBar.current_percent
             healthBar:setPercent(health)
-                :setLabelRight(tostring(astroHealth) .. "%")
+                :setLabelRight(tostring(body:getHealth()) .. "%")
                 :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
             healthBar:draw()
 
@@ -368,7 +360,7 @@ else
 
         hook.add("CalcView", "", function(_, ang)
             return {
-                origin = head:getPos() + ang:getForward() * 12 - Vector(0, 0, 5),
+                origin = camerapoint:getPos(),
                 angles = ang,
                 fov = 120
             }
@@ -381,24 +373,8 @@ else
         hook.remove("InputPressed", "")
     end
 
-    net.receive("OnEnter", function()
-        net.readEntity(function(ent) head = ent end)
-        timer.simple(0.1, function()
-            enableHud(nil, true)
-            createHud()
-        end)
-    end)
-
-    net.receive("OnLeave", function()
-        timer.simple(0.1, function()
-            enableHud(nil, false)
-            removeHud()
-        end)
-    end)
-
-    net.receive("AstroHealthUpdate", function()
-        astroHealth = net.readInt(12)
-    end)
+    hook.add("AstroEntered", "", createHud)
+    hook.add("AstroLeft", "", removeHud)
 
     net.receive("AmmoUpdate", function()
         if net.readBool() then
