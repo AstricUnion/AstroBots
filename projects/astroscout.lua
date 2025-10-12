@@ -5,7 +5,7 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
-require("astrobase.lua")
+require("astrobase")
 require("light")
 require("guns")
 local astrosounds = require("sounds")
