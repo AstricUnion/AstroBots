@@ -209,23 +209,6 @@ if SERVER then
         end
     })
 
-    local function attackDamage(min, max, direction, damage, inflictor)
-        local entsToDamage = find.inBox(min, max)
-        for _, ent in ipairs(entsToDamage) do
-            if ent == astro.body then continue end
-            if isValid(ent) and ent:isValidPhys() then
-                local velocityPermitted, _ = hasPermission("entities.setVelocity", ent)
-                if velocityPermitted and game.getTickCount() % 2 == 0 and isValid(ent) then
-                    ent:getPhysicsObject():setVelocity(direction * 1000)
-                end
-                local damagePermitted, _ = hasPermission("entities.applyDamage", ent)
-                if damagePermitted then
-                    ent:applyDamage(math.clamp(damage, 0, ent:getHealth()), nil, inflictor, DAMAGE.CRUSH)
-                end
-            end
-        end
-    end
-
     -- Attack function
     local function attack()
         local arm1ang = body.rightarm[1]:getLocalAngles()
@@ -253,12 +236,13 @@ if SERVER then
                 local armUp = body.rightarm[3]:getUp()
                 local armRight = body.rightarm[3]:getRight()
                 local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
-                attackDamage(
+                AttackDamage(
                     armPos - (armUp + armRight + (armForward * 3)) * radius,
                     armPos + (armUp + armRight + (armForward * 2)) * radius,
                     armForward,
                     INITIAL_PUNCH_DAMAGE * (isBerserk() and BERSERK.DAMAGE or 1),
-                    arms.rightarm[3]
+                    arms.rightarm[3],
+                    {astro.body}
                 )
             end,
             ["0.7-1"] = function(_, _, fraction)
@@ -316,12 +300,13 @@ if SERVER then
             local armRight = body.rightarm[3]:getRight()
             local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
             local total_damage = damage * (isBerserk() and BERSERK.DAMAGE or 1)
-            attackDamage(
+            AttackDamage(
                 armPos - (armUp + armRight + (armForward * 3)) * radius,
                 armPos + (armUp + armRight + (armForward * 3)) * radius,
                 armForward,
                 total_damage,
-                arms.rightarm[2]
+                arms.rightarm[2],
+                {astro.body}
             )
         end
     end
@@ -420,8 +405,10 @@ if SERVER then
         OFF_ANIMATION = FTimer:new(0.75, 1, {
             [0.3] = function()
                 astrosounds.stop("laserShoot")
-                astrosounds.stop("laserLoop")
                 astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
+            end,
+            [0.5] = function()
+                astrosounds.stop("laserLoop")
             end,
             ["0.3-1"] = function(_, _, fraction)
                 body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * (1 - fraction))))
@@ -556,31 +543,30 @@ if SERVER then
     end
 
     -- Movement think --
-    hook.add("Think", "Movement", function()
-        astro:think(function(dr)
-            if astro:getState() == STATES.Laser and LASER_CONTROL then
-                local res = astro:eyeTrace()
-                if !res then return end
-                body.leftarm[1]:setAngles(
-                    math.lerpAngle(
-                        0.5,
-                        body.leftarm[1]:getAngles(),
-                        (res.HitPos - body.leftarm[1]:getPos()):getAngle()
-                    )
+    hook.add("AstroThink", "Laser", function(as, dr)
+        if as ~= astro then return end
+        if astro:getState() == STATES.Laser and LASER_CONTROL then
+            local res = astro:eyeTrace()
+            if !res then return end
+            body.leftarm[1]:setAngles(
+                math.lerpAngle(
+                    0.5,
+                    body.leftarm[1]:getAngles(),
+                    (res.HitPos - body.leftarm[1]:getPos()):getAngle()
                 )
-                if !isBerserk() then
-                    laser:decreaseCharge(0.16 * game.getTickInterval(), function()
-                        laserOff()
-                    end)
-                end
-                laser:think(function(laser_trace)
-                    astrosounds.play("laserLoop", laser_trace.HitPos)
+            )
+            if !isBerserk() then
+                laser:decreaseCharge(0.16 * game.getTickInterval(), function()
+                    laserOff()
                 end)
-            else
-                laser:increaseCharge(0.16 * game.getTickInterval())
             end
-            syncLaser(dr)
-        end)
+            laser:think(function(laser_trace)
+                astrosounds.play("laserLoop", laser_trace.HitPos)
+            end)
+        else
+            laser:increaseCharge(0.16 * game.getTickInterval())
+        end
+        syncLaser(dr)
     end)
 
 
@@ -659,69 +645,71 @@ if SERVER then
     end)
 
     -- Health --
-    hook.add("PostEntityTakeDamage", "Health", function(target, _, _, amount)
-        if target == astro.body then
-            local state = astro:getState()
-            if BERSERK_TIME == 0 and BERSERK_DAMAGE < BERSERK_REQUIRED_DAMAGE then
-                BERSERK_DAMAGE = math.clamp(
-                    BERSERK_DAMAGE
-                      + amount
-                      * (state == STATES.Block and 1.2 or 1),
-                    0,
-                    BERSERK_REQUIRED_DAMAGE
-                )
-                net.start("BerserkStatusUpdate")
-                net.writeInt(math.round((BERSERK_DAMAGE / BERSERK_REQUIRED_DAMAGE) * 100), 8)
-                net.send(find.allPlayers())
-            end
-            amount = amount * (state == STATES.Block and 0.6 or 1)
-            astro:damage(amount, function()
-                -- Remove hooks
-                hook.remove("Think", "Movement")
-                hook.remove("PostEntityTakeDamage", "health")
-                hook.remove("PostEntityTakeDamage", "ClawsHeal")
-                timer.remove("increaseLaser")
-                timer.remove("BerserkDecrease")
+    hook.add("AstroDamage", "BerserkStuff", function(as, amount)
+        if as ~= astro then return end
+        local state = astro:getState()
+        if BERSERK_TIME == 0 and BERSERK_DAMAGE < BERSERK_REQUIRED_DAMAGE then
+            BERSERK_DAMAGE = math.clamp(
+                BERSERK_DAMAGE
+                  + amount
+                  * (state == STATES.Block and 1.2 or 1),
+                0,
+                BERSERK_REQUIRED_DAMAGE
+            )
+            net.start("BerserkStatusUpdate")
+            net.writeInt(math.round((BERSERK_DAMAGE / BERSERK_REQUIRED_DAMAGE) * 100), 8)
+            net.send(find.allPlayers())
+        end
+        return amount * (state == STATES.Block and 0.6 or 1)
+    end)
 
-                -- Remove animation
-                IdleAnimation:remove()
-                laser:stop()
-                body.base[2]:setLocalAngularVelocity(Angle())
-                body.leftarm.laser[3]:setLocalAngularVelocity(Angle())
-                body.leftarm.laser[2]:setLocalAngularVelocity(Angle())
 
-                -- Remove lights
-                removeLight("Main")
-                removeLight("Underglow")
+    hook.add("AstroDeath", "death", function(as)
+        if as ~= astro then return end
+        -- Remove hooks
+        hook.remove("Think", "Movement")
+        hook.remove("PostEntityTakeDamage", "health")
+        hook.remove("PostEntityTakeDamage", "ClawsHeal")
+        timer.remove("increaseLaser")
+        timer.remove("BerserkDecrease")
 
-                -- Remove sound
-                astrosounds.stop("loop")
-                astrosounds.stop("laserLoop")
-                astrosounds.stop("laserShoot")
+        -- Remove animation
+        IdleAnimation:remove()
+        laser:stop()
+        body.base[2]:setLocalAngularVelocity(Angle())
+        body.leftarm.laser[3]:setLocalAngularVelocity(Angle())
+        body.leftarm.laser[2]:setLocalAngularVelocity(Angle())
 
-                -- Remove arms
-                local delete = {
-                    {arms.leftarm[1], body.leftarm[1]},
-                    {arms.leftarm[2], body.leftarm.laser[1]},
-                    {arms.rightarm[1], body.rightarm[1]},
-                    {arms.rightarm[2], body.rightarm[2]},
-                }
-                for _, to in ipairs(delete) do
-                    local pos = to[1]:getPos()
-                    local angs = to[1]:getAngles()
-                    to[1]:setParent(nil)
-                    to[1]:setAngles(angs)
-                    to[1]:setPos(pos)
-                    to[2]:setParent(to[1])
-                    to[1]:setFrozen(false)
-                    local eff = effect.create()
-                    eff:setOrigin(pos)
-                    eff:setScale(0.01)
-                    eff:setMagnitude(0.01)
-                    eff:play("explosion")
-                    to[1]:emitSound("weapons/underwater_explode3.wav")
-                end
-            end)
+        -- Remove lights
+        removeLight("Main")
+        removeLight("Underglow")
+
+        -- Remove sound
+        astrosounds.stop("loop")
+        astrosounds.stop("laserLoop")
+        astrosounds.stop("laserShoot")
+
+        -- Remove arms
+        local delete = {
+            {arms.leftarm[1], body.leftarm[1]},
+            {arms.leftarm[2], body.leftarm.laser[1]},
+            {arms.rightarm[1], body.rightarm[1]},
+            {arms.rightarm[2], body.rightarm[2]},
+        }
+        for _, to in ipairs(delete) do
+            local pos = to[1]:getPos()
+            local angs = to[1]:getAngles()
+            to[1]:setParent(nil)
+            to[1]:setAngles(angs)
+            to[1]:setPos(pos)
+            to[2]:setParent(to[1])
+            to[1]:setFrozen(false)
+            local eff = effect.create()
+            eff:setOrigin(pos)
+            eff:setScale(0.01)
+            eff:setMagnitude(0.01)
+            eff:play("explosion")
+            to[1]:emitSound("weapons/underwater_explode3.wav")
         end
     end)
 

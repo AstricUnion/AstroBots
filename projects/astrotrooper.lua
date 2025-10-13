@@ -122,19 +122,17 @@ if SERVER then
 
 
     -- Movement hook. There is all movement (blaster rotation, astro.head rotation, movement object think) --
-    hook.add("Think", "Movement", function()
-        astro:think(function()
-            if astro.state == STATES.Idle and blaster.left:isAlive() and blaster.right:isAlive() then
-                local eyeTrace = astro:eyeTrace()
-                if !eyeTrace then return end
-                if blaster.left:isAlive() then
-                    blaster.left.hitbox:setAngles((eyeTrace.HitPos - blaster.left.hitbox:getPos()):getAngle())
-                end
-                if blaster.right:isAlive() then
-                    blaster.right.hitbox:setAngles((eyeTrace.HitPos - blaster.right.hitbox:getPos()):getAngle())
-                end
+    hook.add("AstroThink", "BlasterMovement", function()
+        if astro.state == STATES.Idle and blaster.left:isAlive() and blaster.right:isAlive() then
+            local eyeTrace = astro:eyeTrace()
+            if !eyeTrace then return end
+            if blaster.left:isAlive() then
+                blaster.left.hitbox:setAngles((eyeTrace.HitPos - blaster.left.hitbox:getPos()):getAngle())
             end
-        end)
+            if blaster.right:isAlive() then
+                blaster.right.hitbox:setAngles((eyeTrace.HitPos - blaster.right.hitbox:getPos()):getAngle())
+            end
+        end
     end)
 
 
@@ -272,37 +270,39 @@ if SERVER then
     end
 
 
-    hook.add("PostEntityTakeDamage", "health", function(target, _, _, amount)
+    hook.add("PostEntityTakeDamage", "blasters", function(target, _, _, amount)
         if target == blaster.left.hitbox then
             blaster.left:damage(amount)
             blasterHealthUpdate(true, blaster.left.health)
         elseif target == blaster.right.hitbox then
             blaster.right:damage(amount)
             blasterHealthUpdate(false, blaster.right.health)
-        elseif target == astro.body then
-            astro:damage(amount, function()
-                -- Destroy blasters --
-                blaster.left:damage(blaster.left.health)
-                blaster.right:damage(blaster.right.health)
-
-                -- Delete idle animation
-                IdleAnimation:remove()
-                body.base[2]:setLocalAngularVelocity(Angle())
-                body.base[3]:setLocalAngularVelocity(Angle())
-                body.base[4]:setLocalAngularVelocity(Angle())
-
-                -- Remove hooks
-                hook.remove("Think", "Movement")
-                hook.remove("EntityTakeDamage", "health")
-
-                -- Remove lights
-                removeLight("Main")
-                removeLight("Underglow")
-
-                -- Stop loop
-                astrosounds.stop("loop")
-            end)
         end
+    end)
+
+
+    hook.add("AstroDeath", "death", function()
+        -- Destroy blasters --
+        blaster.left:damage(blaster.left.health)
+        blaster.right:damage(blaster.right.health)
+
+        -- Delete idle animation
+        IdleAnimation:remove()
+        body.base[2]:setLocalAngularVelocity(Angle())
+        body.base[3]:setLocalAngularVelocity(Angle())
+        body.base[4]:setLocalAngularVelocity(Angle())
+
+        -- Remove hooks
+        hook.remove("Think", "Movement")
+        hook.remove("PostEntityTakeDamage", "blasters")
+        hook.remove("AstroDeath", "death")
+
+        -- Remove lights
+        removeLight("Main")
+        removeLight("Underglow")
+
+        -- Stop loop
+        astrosounds.stop("loop")
     end)
 
 else
