@@ -3,15 +3,11 @@
 --@shared
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
---@include astricunion/libs/guns.lua
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
---@include astricunion/libs/astrobase.lua
--- require("astrobase")
-require("astricunion/libs/astrobase.lua")
+require("astrobase")
 require("light")
--- require("guns")
-require("astricunion/libs/guns.lua")
+require("guns")
 local astrosounds = require("sounds")
 
 
@@ -42,7 +38,7 @@ do
     INITIAL_DASH_CLAWS_DAMAGE = INITIAL_CLAWS_DAMAGE * 2
 
     ---Berserk required damage. Can be edited
-    BERSERK_REQUIRED_DAMAGE = 1
+    BERSERK_REQUIRED_DAMAGE = 3200
 
     ---Berserk max time
     BERSERK_MAX_TIME = 12
