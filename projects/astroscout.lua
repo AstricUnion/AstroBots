@@ -3,11 +3,15 @@
 --@shared
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
+--@include astricunion/libs/guns.lua
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
-require("astrobase")
+--@include astricunion/libs/astrobase.lua
+-- require("astrobase")
+require("astricunion/libs/astrobase.lua")
 require("light")
-require("guns")
+-- require("guns")
+require("astricunion/libs/guns.lua")
 local astrosounds = require("sounds")
 
 
@@ -38,7 +42,7 @@ do
     INITIAL_DASH_CLAWS_DAMAGE = INITIAL_CLAWS_DAMAGE * 2
 
     ---Berserk required damage. Can be edited
-    BERSERK_REQUIRED_DAMAGE = 3200
+    BERSERK_REQUIRED_DAMAGE = 1
 
     ---Berserk max time
     BERSERK_MAX_TIME = 12
@@ -49,8 +53,8 @@ end
 CHIPPOS = chip():getPos()
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    require("ftimers")
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
+    require("ftimers")
     require("tweens")
 
     -- THIS FILE CREATES HOLOGRAMS --
@@ -179,361 +183,311 @@ if SERVER then
 
     local arms_list = table.add(arms.rightarm, arms.leftarm)
     for _, v in ipairs(arms_list) do
+        ---@cast v Entity
         v:setMass(100)
+        v:setCollisionGroup(COLLISION_GROUP.IN_VEHICLE)
         laser:addIgnore(v)
         astro:addIgnore(v)
     end
 
     -- Idle animation
-    local base_pos
-    local head_pos
+    local basepos
+    local headpos
     IdleAnimation = FTimer:new(4, -1, {
         [0] = function()
-            base_pos = body.base[1]:getLocalPos()
-            head_pos = astro.head:getLocalPos()
+            basepos = body.base[1]:getLocalPos()
+            headpos = astro.head:getLocalPos()
         end,
         ["0-1"] = function(_, _, fraction)
             local rads = math.rad(360 * fraction)
             local smoothed_x = math.sin(rads)
             local smoothed_y = math.cos(rads)
-            body.base[1]:setLocalPos(base_pos + Vector(smoothed_x * 3, 0, smoothed_y * 3))
-            astro.head:setLocalPos(head_pos + Vector(smoothed_x * 2, 0, smoothed_y * 2))
+            body.base[1]:setLocalPos(basepos + Vector(smoothed_x * 4, 0, smoothed_y * 4))
+            astro.head:setLocalPos(headpos + Vector((1 - smoothed_x) * 4, 0, smoothed_y * 4))
         end,
         ["0-0.5"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(fraction)
-            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 2))
-            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 3))
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 4 - 2))
+            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 6 - 3))
         end,
         ["0.5-1"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(1 - fraction)
-            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 2))
-            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 3))
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 4 - 2))
+            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 6 - 3))
         end
     })
 
+
+    -- Function to attack with punch
+    local function punchDamage(attacked)
+        local armPos = body.rightarm[3]:getPos()
+        local armForward = body.rightarm[3]:getForward()
+        local armUp = body.rightarm[3]:getUp()
+        local armRight = body.rightarm[3]:getRight()
+        local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
+        local damage = INITIAL_PUNCH_DAMAGE * (isBerserk() and BERSERK.DAMAGE or 1)
+        local box = (armUp + armRight + (armForward * 2)) * radius
+        return AttackDamage(armPos - box, armPos + box, armForward, damage, arms.rightarm[3], {astro.body}, attacked)
+    end
+
+
     -- Attack function
     local function attack()
-        local arm1ang = body.rightarm[1]:getLocalAngles()
-        local arm2ang = body.rightarm[2]:getLocalAngles()
-        local arm3ang = body.rightarm[3]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
-        local cameraang = astro.cameraPin:getLocalAngles()
         astro:setState(STATES.Attack)
         astrosounds.play("punch", Vector(), body.rightarm[2])
-        FTimer:new(0.5, 1, {
-            ["0-0.3"] = function(_, _, fraction)
-                local smoothed = math.easeOutQuint(fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, 80, 0) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, -1, 1) - cameraang) * smoothed)
-            end,
-            ["0.3-0.6"] = function(_, _, fraction)
-                local smoothed = math.easeOutQuint(fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
-                body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
-                body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, 1, -1) - cameraang) * smoothed)
-                local armPos = body.rightarm[3]:getPos()
-                local armForward = body.rightarm[3]:getForward()
-                local armUp = body.rightarm[3]:getUp()
-                local armRight = body.rightarm[3]:getRight()
-                local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
-                AttackDamage(
-                    armPos - (armUp + armRight + (armForward * 3)) * radius,
-                    armPos + (armUp + armRight + (armForward * 2)) * radius,
-                    armForward,
-                    INITIAL_PUNCH_DAMAGE * (isBerserk() and BERSERK.DAMAGE or 1),
-                    arms.rightarm[3],
-                    {astro.body}
-                )
-            end,
-            ["0.7-1"] = function(_, _, fraction)
-                local smoothed = math.easeInCubic(1 - fraction)
-                body.base[1]:setLocalAngles(baseang - Angle(0, -70, 5) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang - Angle(40, -60, -120) * smoothed)
-                body.rightarm[2]:setLocalAngles(arm2ang - Angle(-100, 0, 0) * smoothed)
-                body.rightarm[3]:setLocalAngles(arm3ang - Angle(0, 10, 90) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang - cameraang * smoothed)
-            end,
-            [1] = function()
+        local tween = Tween:new()
+        local attacked = {}
+
+        tween:add(
+            Param:new(0.2, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 10), math.easeInBack),
+            Param:new(0.2, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(20, -120, -120), math.easeInSine),
+            Param:new(0.2, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, -2, 2), math.easeInSine)
+        )
+        tween:add(
+            Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 70, -10), math.easeOutCubic),
+            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, -60, -90), math.easeOutCubic, nil, function()
+                attacked = punchDamage(attacked)
+            end),
+            Param:new(0.1, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(0, 0, 0), math.easeOutCubic),
+            Param:new(0.1, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 10, 90), math.easeOutCubic),
+            Param:new(0.1, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 2, -2), math.easeOutQuint)
+        )
+        tween:sleep(0.05)
+        tween:add(
+            Param:new(0.2, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCubic),
+            Param:new(0.2, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutSine),
+            Param:new(0.2, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutSine),
+            Param:new(0.2, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 10, 90), math.easeInOutSine, function() astro:setState(STATES.Idle) end),
+            Param:new(0.2, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(), math.easeInOutQuint)
+        )
+
+        tween:start()
+    end
+
+    local function createEffectHolo(pos, parent)
+        local holo = hologram.create(pos, Angle(), "models/hunter/plates/plate.mdl")
+        if !holo then return end
+        holo:setParent(parent)
+        holo:setTrails(16, 0, 1, "trails/laser", Color(255, 0, 0))
+        holo:setColor(Color(0, 0, 0, 0))
+        timer.simple(0.2, function()
+            holo:setParent(nil)
+        end)
+        timer.simple(1, function()
+            holo:remove()
+        end)
+        return holo
+    end
+
+    local function clawsAttackSwing(tween, callback)
+        tween:add(
+            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeInOutBack),
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-50, -80, 0), math.easeInOutQuint),
+            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeInOutQuint, callback),
+            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(-1, -1, 1), math.easeInBack, function()
+                local pos = body.rightarm[3]:getPos()
+                local forward = body.rightarm[3]:getForward() * 50
+                local right = body.rightarm[1]:getRight() * 50
+                createEffectHolo(pos + forward + right, body.rightarm[3])
+                createEffectHolo(pos + forward, body.rightarm[3])
+                createEffectHolo(pos + forward - right, body.rightarm[3])
+            end)
+        )
+    end
+
+    local function clawsAttackDamage(damage, attacked)
+        local armPos = body.rightarm[3]:getPos()
+        local armForward = body.rightarm[3]:getForward()
+        local armUp = body.rightarm[3]:getUp()
+        local armRight = body.rightarm[3]:getRight()
+        local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
+        local total_damage = damage * (isBerserk() and BERSERK.DAMAGE or 1)
+        local max = (armUp + armRight + (armForward * 3)) * radius
+        AttackDamage(armPos - max, armPos + max, armForward, total_damage, arms.rightarm[2], {astro.body}, attacked)
+    end
+
+
+    local function clawsAttackPunch(tween, damage)
+        local attacked = {}
+        tween:add(
+            Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutQuint),
+            Param:new(0.2, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(1, 1, -1), math.easeOutBack),
+            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(20, 20, 0), math.easeOutQuint, nil, function()
+                clawsAttackDamage(damage, attacked)
+            end)
+        )
+    end
+
+    local function clawsAttackReturn(tween, callback)
+        tween:add(
+            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutQuint),
+            Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutCubic, function()
+                if callback then callback() end
                 astro:setState(STATES.Idle)
-            end
-        })
-    end
-
-
-    local function clawsAttackSwing()
-        local arm1ang
-        local arm2ang
-        local baseang
-        local cameraang
-        return function(_, _, fraction)
-            if math.floor(fraction * 10) == 0 then
-                arm1ang = body.rightarm[1]:getLocalAngles()
-                arm2ang = body.rightarm[2]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-                cameraang = astro.cameraPin:getLocalAngles()
-            end
-            local smoothed = math.easeOutCubic(fraction)
-            body.base[1]:setLocalAngles(baseang + (Angle(0, -80, 0) - baseang) * smoothed)
-            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(-50, -80, 0) - arm1ang) * smoothed)
-            body.rightarm[2]:setLocalAngles(arm2ang + (- arm2ang) * smoothed)
-            astro.cameraPin:setLocalAngles(cameraang + (Angle(0, -3, 1) - cameraang) * smoothed)
-        end
-    end
-
-    local function clawsAttackPunch(damage)
-        local arm1ang
-        local baseang
-        local cameraang
-        return function(_, _, fraction)
-            if math.floor(fraction * 10) == 0 then
-                arm1ang = body.rightarm[1]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-                cameraang = astro.cameraPin:getLocalAngles()
-            end
-            local smoothed = math.easeOutCubic(fraction)
-            body.base[1]:setLocalAngles(baseang + (Angle(0, 60, -5) - baseang) * smoothed)
-            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(20, 20, 0) - arm1ang) * smoothed)
-            astro.cameraPin:setLocalAngles(cameraang + (Angle(0, 3, -1) - cameraang) * smoothed)
-            local armPos = body.rightarm[3]:getPos()
-            local armForward = body.rightarm[3]:getForward()
-            local armUp = body.rightarm[3]:getUp()
-            local armRight = body.rightarm[3]:getRight()
-            local radius = 80 * (isBerserk() and BERSERK.RADIUS or 1)
-            local total_damage = damage * (isBerserk() and BERSERK.DAMAGE or 1)
-            AttackDamage(
-                armPos - (armUp + armRight + (armForward * 3)) * radius,
-                armPos + (armUp + armRight + (armForward * 3)) * radius,
-                armForward,
-                total_damage,
-                arms.rightarm[2],
-                {astro.body}
-            )
-        end
-    end
-
-    local function clawsAttackReturn()
-        local arm1ang
-        local arm2ang
-        local baseang
-        local cameraang
-        return function(_, _, fraction)
-            if math.floor(fraction * 10) == 0 then
-                arm1ang = body.rightarm[1]:getLocalAngles()
-                arm2ang = body.rightarm[2]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-                cameraang = astro.cameraPin:getLocalAngles()
-            end
-            local smoothed = math.easeInOutQuad(fraction)
-            body.base[1]:setLocalAngles(baseang + (- baseang) * smoothed)
-            body.rightarm[1]:setLocalAngles(arm1ang + (Angle(40, -120, -120) - arm1ang) * smoothed)
-            body.rightarm[2]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
-            astro.cameraPin:setLocalAngles(cameraang - cameraang * smoothed)
-        end
+            end),
+            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(), math.easeInOutCubic)
+        )
     end
 
     local function clawsAttack()
         astro:setState(STATES.Attack)
         astrosounds.play("punchClaws", Vector(), body.rightarm[2])
-        FTimer:new(1, 1, {
-            ["0-0.4"] = clawsAttackSwing(),
-            ["0.4-0.5"] = clawsAttackPunch(INITIAL_CLAWS_DAMAGE),
-            ["0.6-1"] = clawsAttackReturn(),
-            [1] = function()
-                astro:setState(STATES.Idle)
-            end
-        })
+        local tween = Tween:new()
+        clawsAttackSwing(tween)
+        clawsAttackPunch(tween, INITIAL_CLAWS_DAMAGE)
+        clawsAttackReturn(tween)
+        tween:start()
     end
 
 
     local LASER_CONTROL = false
-    local ON_ANIMATION
-    local OFF_ANIMATION
+    local LASER_ANIMATION
+
+    local function getLaserAngle()
+        local res = astro:eyeTrace()
+        if !res then return end
+        return body.base[1]:worldToLocalAngles((res.HitPos - body.leftarm[1]:getPos()):getAngle())
+    end
 
     -- Laser animation
     local function laserOn()
-        local arm1ang = body.leftarm[1]:getLocalAngles()
-        local arm2ang = body.leftarm.laser[1]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
-        local cameraang = astro.cameraPin:getLocalAngles()
+        if LASER_ANIMATION then LASER_ANIMATION:remove() end
         astro:setState(STATES.Laser)
         astrosounds.stop("laserEnd")
         astrosounds.play("laserStart", Vector(), body.leftarm.laser[3])
-        if ON_ANIMATION then return end
-        if OFF_ANIMATION then
-            OFF_ANIMATION:remove()
-            OFF_ANIMATION = nil
-        end
-        ON_ANIMATION = FTimer:new(0.5, 1, {
-            ["0-1"] = function(_, _, fraction)
-                body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * fraction)))
-                local smoothed = math.easeInOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - (Angle(0, 30, -10) - baseang) * smoothed)
-                body.leftarm.laser[1]:setLocalAngles(arm2ang + ( - arm2ang) * smoothed)
-                local res = astro:eyeTrace()
-                if !res then return end
-                body.leftarm[1]:setLocalAngles(
-                    arm1ang + (
-                        body.base[1]:worldToLocalAngles(
-                            (res.HitPos - body.leftarm[1]:getPos()):getAngle()
-                        ) * smoothed - arm1ang
-                    ) * smoothed
-                )
-                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, 0, 1) - cameraang) * smoothed)
-            end,
-            [1] = function()
+        LASER_ANIMATION = Tween:new()
+        LASER_ANIMATION:add(
+            Param:new(0.5, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -30, -10), math.easeInOutCirc),
+            Fraction:new(1.5, math.easeInQuint, nil, function(_, f)
+                body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1000 * f)))
+            end),
+            Param:new(0.2, body.leftarm[1], PROPERTY.LOCALANGLES, getLaserAngle, math.easeInOutCubic, function()
+                LASER_CONTROL = true
+            end),
+            Param:new(0.5, body.leftarm.laser[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCubic, function()
                 laser:start()
                 astrosounds.play("laserShoot", Vector(), body.leftarm.laser[3])
-                LASER_CONTROL = true
-                ON_ANIMATION = nil
-            end
-        })
+            end),
+            Param:new(0.5, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 0, 2), math.easeInOutCirc)
+        )
+        LASER_ANIMATION:start()
     end
 
 
     local function laserOff()
-        local arm1ang = body.leftarm[1]:getLocalAngles()
-        local arm2ang = body.leftarm.laser[1]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
-        local cameraang = astro.cameraPin:getLocalAngles()
+        if LASER_ANIMATION then LASER_ANIMATION:remove() end
         laser:stop()
+        LASER_CONTROL = false
         astrosounds.stop("laserStart")
-        if OFF_ANIMATION then return end
-        if ON_ANIMATION then
-            ON_ANIMATION:remove()
-            ON_ANIMATION = nil
-        end
-        OFF_ANIMATION = FTimer:new(0.75, 1, {
-            [0.3] = function()
-                astrosounds.stop("laserShoot")
-                astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
-            end,
-            [0.5] = function()
-                astrosounds.stop("laserLoop")
-            end,
-            ["0.3-1"] = function(_, _, fraction)
-                body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1300 * (1 - fraction))))
-                local smoothed = math.easeInOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - baseang * smoothed)
-                body.leftarm.laser[1]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
-                body.leftarm[1]:setLocalAngles(arm1ang + (Angle(40, 120, 120) - arm1ang) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang - cameraang * smoothed)
-            end,
-            [1] = function()
-                LASER_CONTROL = false
+        astrosounds.stop("laserShoot")
+        astrosounds.play("laserEnd", Vector(), body.leftarm.laser[3])
+        LASER_ANIMATION = Tween:new()
+        LASER_ANIMATION:sleep(0.3, function()
+            astrosounds.stop("laserLoop")
+        end)
+        LASER_ANIMATION:add(
+            Param:new(0.5, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCirc),
+            Fraction:new(0.5, math.easeInOutQuint, nil, function(_, f)
+                body.leftarm.laser[2]:setLocalAngularVelocity(Angle(0, 0, 200 + (1000 * (1 - f))))
+            end),
+            Param:new(0.5, body.leftarm[1], PROPERTY.LOCALANGLES, Angle(40, 120, 120), math.easeInOutQuad, function()
                 astro:setState(STATES.Idle)
-                OFF_ANIMATION = nil
-            end
-        })
+            end),
+            Param:new(0.2, body.leftarm.laser[1], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeOutCubic),
+            Param:new(0.5, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(), math.easeInOutCirc)
+        )
+        LASER_ANIMATION:start()
     end
 
 
+    local BLOCK_ANIMATION
     local function armBlock()
         astro:setState(STATES.Block)
-        local leftarm1ang = body.leftarm[1]:getLocalAngles()
-        local leftarm2ang = body.leftarm.laser[1]:getLocalAngles()
-        local rightarm1ang = body.rightarm[1]:getLocalAngles()
-        local rightarm2ang = body.rightarm[2]:getLocalAngles()
-        local rightarm3ang = body.rightarm[3]:getLocalAngles()
-        FTimer:new(0.35, 1, {
-            ["0-1"] = function(f, _, fraction)
-                if astro:getState() ~= STATES.Block then f:remove() end
-                local smoothed = math.easeInOutExpo(fraction)
-                body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(0, -20, 60) - leftarm1ang) * smoothed)
-                body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-80, 0, 0) - leftarm2ang) * smoothed)
-                body.rightarm[1]:setLocalAngles(rightarm1ang + (Angle(0, 20, -60) - rightarm1ang) * smoothed)
-                body.rightarm[2]:setLocalAngles(rightarm2ang + (Angle(-40, 0, 0) - rightarm2ang) * smoothed)
-                body.rightarm[3]:setLocalAngles(rightarm3ang + (Angle(-20, 0, 180) - rightarm3ang) * smoothed)
-            end,
-        })
+        if BLOCK_ANIMATION then BLOCK_ANIMATION:remove() end
+        BLOCK_ANIMATION = Tween:new()
+        BLOCK_ANIMATION:add(
+            Param:new(0.35, body.leftarm[1], PROPERTY.LOCALANGLES, Angle(0, -20, 60), math.easeInOutQuint),
+            Param:new(0.35, body.leftarm.laser[1], PROPERTY.LOCALANGLES, Angle(-80, 0, 0), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, 20, -60), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-40, 0, 0), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(-20, 0, 180), math.easeInOutQuint)
+        )
+        BLOCK_ANIMATION:start()
     end
 
     local function armUnblock()
-        local leftarm1ang = body.leftarm[1]:getLocalAngles()
-        local leftarm2ang = body.leftarm.laser[1]:getLocalAngles()
-        local rightarm1ang = body.rightarm[1]:getLocalAngles()
-        local rightarm2ang = body.rightarm[2]:getLocalAngles()
-        local rightarm3ang = body.rightarm[3]:getLocalAngles()
-        FTimer:new(0.5, 1, {
-            ["0-1"] = function(f, _, fraction)
-                if astro:getState() ~= STATES.Block then f:remove() end
-                local smoothed = math.easeInOutExpo(fraction)
-                body.leftarm[1]:setLocalAngles(leftarm1ang + (Angle(40, 120, 120) - leftarm1ang) * smoothed)
-                body.leftarm.laser[1]:setLocalAngles(leftarm2ang + (Angle(-100, 0, 0) - leftarm2ang) * smoothed)
-                body.rightarm[1]:setLocalAngles(rightarm1ang + (Angle(40, -120, -120) - rightarm1ang) * smoothed)
-                body.rightarm[2]:setLocalAngles(rightarm2ang + (Angle(-100, 0, 0) - rightarm2ang) * smoothed)
-                body.rightarm[3]:setLocalAngles(rightarm3ang + (Angle(0, 10, 90) - rightarm3ang) * smoothed)
-            end,
-            [1] = function() astro:setState(STATES.Idle) end
-        })
+        if BLOCK_ANIMATION then BLOCK_ANIMATION:remove() end
+        BLOCK_ANIMATION = Tween:new()
+        BLOCK_ANIMATION:add(
+            Param:new(0.35, body.leftarm[1], PROPERTY.LOCALANGLES, Angle(40, 120, 120), math.easeInOutQuint),
+            Param:new(0.35, body.leftarm.laser[1], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 10, 90), math.easeInOutQuint, function()
+                astro:setState(STATES.Idle)
+            end)
+        )
+        BLOCK_ANIMATION:start()
     end
 
 
     local CAN_DASH = true
+    local function dashCD()
+        timer.simple(3, function()
+            CAN_DASH = true
+        end)
+    end
+
     local function dash()
         if !CAN_DASH then return end
         CAN_DASH = false
         astro:setState(STATES.Dash)
-        local velocity = 30000
         local direction = astro:getDirection()
         if !direction then return end
         direction = direction:isZero() and astro.body:getForward() or direction
-        FTimer:new(2.25, 1, {
-            ["0-0.2"] = clawsAttackSwing(),
-            [0.25] = function()
-                astrosounds.play("dash", Vector(), astro.body)
-            end,
-            ["0.2-1"] = function(f)
-                velocity = math.lerp(0.1, velocity, 0)
-                astro.body:addVelocity(direction * velocity)
-                local pos = astro.body:getPos()
-                local up = astro.body:getUp()
-                local right = astro.body:getRight()
-                local forward = astro.body:getForward()
-                local entsToDamage = find.inBox(
-                    pos - ((up / 3) + right - forward) * 40,
-                    pos + ((forward * 10) + (up / 3) + right) * 40
-                )
-                for _, ent in ipairs(entsToDamage) do
-                    if ent == astro.body
-                    or ent == astro.head
-                    or ent == astro.driver
-                    or ent == astro.seat
-                    or table.hasValue(arms_list, ent) then
-                        continue
-                    end
-                    if isValid(ent) and ent:isValidPhys() then
-                        f:remove()
-                        astro:setState(STATES.Attack)
-                        astrosounds.play("punchClaws", Vector(), body.rightarm[2])
-                        FTimer:new(1, 1, {
-                            ["0-0.1"] = clawsAttackPunch(INITIAL_DASH_CLAWS_DAMAGE),
-                            ["0.1-0.6"] = clawsAttackReturn(),
-                            [0.625] = function(f)
-                                astro:setState(STATES.Idle)
-                                timer.simple(3, function()
-                                    CAN_DASH = true
-                                end)
-                                f:remove()
-                            end
-                        })
-                        return
+        local attackTween = Tween:new()
+        clawsAttackPunch(attackTween, INITIAL_DASH_CLAWS_DAMAGE)
+        clawsAttackReturn(attackTween, dashCD)
+
+        local dashTween = Tween:new()
+        clawsAttackSwing(dashTween, function()
+            astrosounds.play("dash", Vector(), astro.body)
+        end)
+        dashTween:add(
+            Fraction:new(
+                1.8, math.easeOutSine, nil,
+                function(tween, f)
+                    astro.physobj:addVelocity(direction * 3000 * f)
+                    local pos = astro.body:getPos()
+                    local up = astro.body:getUp() / 3
+                    local right = astro.body:getRight()
+                    local forward = astro.body:getForward()
+                    local entsToDamage = find.inBox(
+                        pos - (up + right - forward) * 40,
+                        pos + ((forward * 10) + up + right) * 40
+                    )
+                    for _, ent in ipairs(entsToDamage) do
+                        if ent == astro.body
+                          or ent == astro.head
+                          or ent == astro.driver
+                          or ent == astro.seat
+                          or table.hasValue(arms_list, ent) then
+                            continue
+                        end
+                        if isValid(ent) and ent:isValidPhys() then
+                            astro:setState(STATES.Attack)
+                            astrosounds.play("punchClaws", Vector(), body.rightarm[2])
+                            tween:remove()
+                            attackTween:start()
+                            return
+                        end
                     end
                 end
-            end,
-            [1] = function()
-                FTimer:new(0.3, 1, {
-                    ["0-1"] = clawsAttackReturn(),
-                    [0.9375] = function()
-                        astro:setState(STATES.Idle)
-                        timer.simple(3, function()
-                            CAN_DASH = true
-                        end)
-                    end
-                })
-            end
-        })
+            )
+        )
+        clawsAttackReturn(dashTween, dashCD)
+        dashTween:start()
     end
 
     local function syncLaser(dr)
@@ -706,6 +660,7 @@ if SERVER then
             to[1]:setPos(pos)
             to[2]:setParent(to[1])
             to[1]:setFrozen(false)
+            to[1]:setCollisionGroup(COLLISION_GROUP.NONE)
             local eff = effect.create()
             eff:setOrigin(pos)
             eff:setScale(0.01)
