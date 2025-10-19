@@ -683,9 +683,7 @@ if SERVER then
     end)
 else
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
-    --@include astricunion/libs/ui.lua
-    -- require("ui")
-    require("astricunion/libs/ui.lua")
+    require("ui")
 
     ---@type number
     local laserCharge = 1

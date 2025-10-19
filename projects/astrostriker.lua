@@ -17,7 +17,9 @@ end
 
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
+    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
     require("ftimers")
+    require("tweens")
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include astricunion/bots/holos/astro_striker_holos.lua
@@ -82,191 +84,123 @@ if SERVER then
     })
 
     local function mainAttack1()
-        local arm1ang = body.rightarm[1]:getLocalAngles()
-        local arm2ang = body.rightarm[2]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
-        local cameraang = astro.cameraPin:getLocalAngles()
         astro:setState(STATES.Attack)
-        FTimer:new(1, 1, {
-            ["0-0.4"] = function(_, _, fraction)
-                local smoothed = math.easeOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang + (Angle(0, -80, 0) - baseang) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang + (Angle(0, -80, -90) - arm1ang) * smoothed)
-                body.rightarm[2]:setLocalAngles(arm2ang + (- arm2ang) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, -1, 1) - cameraang) * smoothed)
-            end,
-            ["0.4-0.5"] = function(_, _, fraction)
-                local smoothed = math.easeOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang + (Angle(0, 60, -5) - baseang) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang + (Angle(0, 20, -90) - arm1ang) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, 1, -1) - cameraang) * smoothed)
-                local armPos = body.rightarm[2]:getPos()
-                local armForward = body.rightarm[2]:getForward()
-                local armUp = body.rightarm[2]:getUp()
-                local armRight = body.rightarm[2]:getRight()
-                AttackDamage(
-                    armPos - (armUp + armRight + (armForward * 3)) * 80,
-                    armPos + (armUp + armRight + (armForward * 2)) * 80,
-                    armForward,
-                    INITIAL_WEAK_DAMAGE,
-                    nil,
-                    {astro.body}
-                )
-            end,
-            [0.6] = function()
-                arm1ang = body.rightarm[1]:getLocalAngles()
-                arm2ang = body.rightarm[2]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-            end,
-            ["0.6-1"] = function(_, _, fraction)
-                local smoothed = math.easeInOutQuad(fraction)
-                body.base[1]:setLocalAngles(baseang + (- baseang) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang + (Angle(40, -120, -120) - arm1ang) * smoothed)
-                body.rightarm[2]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang + ( - cameraang) * smoothed)
-            end,
-            [1] = function()
+        local tween = Tween:new()
+        tween:add(
+            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, -80, -90), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic),
+            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, -1, 1), math.easeOutCubic)
+        )
+        tween:add(
+            Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutCubic),
+            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, 20, -90), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-30, 0, 0), math.easeOutCubic),
+            Param:new(0.1, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 1, -1), math.easeOutCubic)
+        )
+        tween:sleep(0.1)
+        tween:add(
+            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeOutCubic),
+            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic, function()
                 astro:setState(STATES.Idle)
-            end
-        })
+            end)
+        )
+        tween:start()
     end
 
 
     local function mainAttack2()
-        local arm1ang = body.rightarm[1]:getLocalAngles()
-        local arm2ang = body.rightarm[2]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
-        local cameraang = astro.cameraPin:getLocalAngles()
         astro:setState(STATES.Attack)
-        FTimer:new(1, 1, {
-            ["0-0.4"] = function(_, _, fraction)
-                local smoothed = math.easeOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang + (Angle(0, -80, 0) - baseang) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang + (Angle(-60, -80, -90) - arm1ang) * smoothed)
-                body.rightarm[2]:setLocalAngles(arm2ang + (- arm2ang) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang + (Angle(-2, -1, -1) - cameraang) * smoothed)
-            end,
-            ["0.4-0.5"] = function(_, _, fraction)
-                local smoothed = math.easeOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang + (Angle(0, 60, -5) - baseang) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang + (Angle(20, 20, -90) - arm1ang) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang + (Angle(2, 1, 1) - cameraang) * smoothed)
-                local armPos = body.rightarm[2]:getPos()
-                local armForward = body.rightarm[2]:getForward()
-                local armUp = body.rightarm[2]:getUp()
-                local armRight = body.rightarm[2]:getRight()
-                AttackDamage(
-                    armPos - (armUp + armRight + (armForward * 3)) * 80,
-                    armPos + (armUp + armRight + (armForward * 2)) * 80,
-                    armForward,
-                    INITIAL_WEAK_DAMAGE,
-                    nil,
-                    {astro.body}
-                )
-            end,
-            [0.6] = function()
-                arm1ang = body.rightarm[1]:getLocalAngles()
-                arm2ang = body.rightarm[2]:getLocalAngles()
-                baseang = body.base[1]:getLocalAngles()
-            end,
-            ["0.6-1"] = function(_, _, fraction)
-                local smoothed = math.easeInOutQuad(fraction)
-                body.base[1]:setLocalAngles(baseang + (- baseang) * smoothed)
-                body.rightarm[1]:setLocalAngles(arm1ang + (Angle(40, -120, -120) - arm1ang) * smoothed)
-                body.rightarm[2]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang + ( - cameraang) * smoothed)
-            end,
-            [1] = function()
+        local tween = Tween:new()
+        tween:add(
+            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-60, -80, -90), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic),
+            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(-2, -1, 1), math.easeOutCubic)
+        )
+        tween:add(
+            Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutCubic),
+            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(20, 20, -90), math.easeOutCubic),
+            Param:new(0.1, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 1, -1), math.easeOutCubic)
+        )
+        tween:sleep(0.1)
+        tween:add(
+            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeOutCubic),
+            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeOutCubic),
+            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic, function()
                 astro:setState(STATES.Idle)
-            end
-        })
+            end)
+        )
+        tween:start()
     end
 
 
     local BLASTERS_CONTROL = false
-    local ON_ANIMATION
-    local OFF_ANIMATION
+    local BLASTERS_ANIMATION
+
+    local function getBlastersAngle()
+        local res = astro:eyeTrace()
+        if !res then return end
+        return body.base[1]:worldToLocalAngles((res.HitPos - body.leftarm[1]:getPos()):getAngle())
+    end
 
     -- Blasters animation
     local function blastersOn()
-        local arm1ang = body.leftarm[1]:getLocalAngles()
-        local arm2ang = body.leftarm[2]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
-        local cameraang = astro.cameraPin:getLocalAngles()
+        if BLASTERS_ANIMATION then BLASTERS_ANIMATION:remove() end
         astro:setState(STATES.Blasters)
-        if ON_ANIMATION then return end
-        if OFF_ANIMATION then
-            OFF_ANIMATION:remove()
-            OFF_ANIMATION = nil
-        end
-        ON_ANIMATION = FTimer:new(0.5, 1, {
-            ["0-1"] = function(_, _, fraction)
-                body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 200 * fraction))
-                local smoothed = math.easeInOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - (Angle(0, 30, -10) - baseang) * smoothed)
-                body.leftarm[2]:setLocalAngles(arm2ang + ( - arm2ang) * smoothed)
-                local res = astro:eyeTrace()
-                if !res then return end
-                body.leftarm[1]:setLocalAngles(
-                    arm1ang + (
-                        body.base[1]:worldToLocalAngles(
-                            (res.HitPos - body.leftarm[1]:getPos()):getAngle()
-                        ) * smoothed - arm1ang
-                    ) * smoothed
-                )
-                astro.cameraPin:setLocalAngles(cameraang + (Angle(0, 0, 1) - cameraang) * smoothed)
-            end,
-            [1] = function()
+        BLASTERS_ANIMATION = Tween:new()
+        BLASTERS_ANIMATION:add(
+            Param:new(0.5, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -30, -10), math.easeInOutCirc),
+            Fraction:new(1.5, math.easeInQuint, nil, function(_, f)
+                body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 1000 * f))
+            end),
+            Param:new(0.2, body.leftarm[1], PROPERTY.LOCALANGLES, getBlastersAngle, math.easeInOutCubic, function()
                 BLASTERS_CONTROL = true
-                ON_ANIMATION = nil
-            end
-        })
+            end),
+            Param:new(0.5, body.leftarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCubic),
+            Param:new(0.5, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 0, 2), math.easeInOutCirc)
+        )
+        BLASTERS_ANIMATION:start()
     end
 
 
     local function blastersOff()
-        local arm1ang = body.leftarm[1]:getLocalAngles()
-        local arm2ang = body.leftarm[2]:getLocalAngles()
-        local baseang = body.base[1]:getLocalAngles()
-        local cameraang = astro.cameraPin:getLocalAngles()
-        if OFF_ANIMATION then return end
-        if ON_ANIMATION then
-            ON_ANIMATION:remove()
-            ON_ANIMATION = nil
-        end
-        OFF_ANIMATION = FTimer:new(0.5, 1, {
-            ["0-1"] = function(_, _, fraction)
-                body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 200 * (1 - fraction)))
-                local smoothed = math.easeInOutCubic(fraction)
-                body.base[1]:setLocalAngles(baseang - baseang * smoothed)
-                body.leftarm[2]:setLocalAngles(arm2ang + (Angle(-100, 0, 0) - arm2ang) * smoothed)
-                body.leftarm[1]:setLocalAngles(arm1ang + (Angle(40, 120, 120) - arm1ang) * smoothed)
-                astro.cameraPin:setLocalAngles(cameraang - cameraang * smoothed)
-            end,
-            [1] = function()
-                BLASTERS_CONTROL = false
+        if BLASTERS_ANIMATION then BLASTERS_ANIMATION:remove() end
+        BLASTERS_CONTROL = false
+        BLASTERS_ANIMATION = Tween:new()
+        BLASTERS_ANIMATION:sleep(0.3)
+        BLASTERS_ANIMATION:add(
+            Param:new(0.5, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCirc),
+            Fraction:new(0.5, math.easeInOutQuint, nil, function(_, f)
+                body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 1000 * (1 - f)))
+            end),
+            Param:new(0.5, body.leftarm[1], PROPERTY.LOCALANGLES, Angle(40, 120, 120), math.easeInOutQuad, function()
                 astro:setState(STATES.Idle)
-                OFF_ANIMATION = nil
-            end
-        })
+            end),
+            Param:new(0.2, body.leftarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeOutCubic),
+            Param:new(0.5, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(), math.easeInOutCirc)
+        )
+        BLASTERS_ANIMATION:start()
     end
 
 
     -- Movement think --
-    hook.add("Think", "Movement", function()
-        astro:think(function()
-            if astro:getState() == STATES.Blasters and BLASTERS_CONTROL then
-                local res = astro:eyeTrace()
-                if !res then return end
-                body.leftarm[1]:setAngles(
-                    math.lerpAngle(
-                        0.5,
-                        body.leftarm[1]:getAngles(),
-                        (res.HitPos - body.leftarm[1]:getPos()):getAngle()
-                    )
+    hook.add("AstroThink", "Movement", function(as, _)
+        if as ~= astro then return end
+        if astro:getState() == STATES.Blasters and BLASTERS_CONTROL then
+            local res = astro:eyeTrace()
+            if !res then return end
+            body.leftarm[1]:setAngles(
+                math.lerpAngle(
+                    0.5,
+                    body.leftarm[1]:getAngles(),
+                    (res.HitPos - body.leftarm[1]:getPos()):getAngle()
                 )
-            end
-        end)
+            )
+        end
     end)
 
     hook.add("InputPressed", "", function(ply, key)
