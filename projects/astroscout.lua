@@ -598,7 +598,7 @@ if SERVER then
     end)
 
     hook.add("PostEntityTakeDamage", "ClawsHeal", function(_, _, inflictor, amount)
-        if inflictor == arms.rightarm[2] then
+        if inflictor == arms.rightarm[2] and amount > 0 then
             astro:damage(amount * -0.15)
         end
     end)
