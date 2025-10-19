@@ -3,13 +3,11 @@
 --@shared
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
---@include astricunion/libs/guns.lua
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
 require("astrobase")
 require("light")
 require("guns")
-require("astricunion/libs/guns.lua")
 local astrosounds = require("sounds")
 
 
@@ -179,6 +177,8 @@ if SERVER then
         return
     end
 
+
+    -- Make arms uncollidable and weighted
     local arms_list = table.add(arms.rightarm, arms.leftarm)
     for _, v in ipairs(arms_list) do
         ---@cast v Entity
@@ -214,6 +214,7 @@ if SERVER then
             astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 6 - 3))
         end
     })
+    -- TODO: move it to FUCKING tweens
 
 
     -- Function to attack with punch
@@ -262,6 +263,8 @@ if SERVER then
         tween:start()
     end
 
+
+    ---Holo effect to claws
     local function createEffectHolo(pos, parent)
         local holo = hologram.create(pos, Angle(), "models/hunter/plates/plate.mdl")
         if !holo then return end
@@ -456,7 +459,9 @@ if SERVER then
             Fraction:new(
                 1.8, math.easeOutCubic, nil,
                 function(tween, f)
+                    -- this don't work, idk why, but i guess it's ticks make something --
                     astro.physobj:addVelocity(direction * 700000 * (1 - f))
+                    ---------------------------------------------------------------------
                     local pos = astro.body:getPos()
                     local up = astro.body:getUp() / 3
                     local right = astro.body:getRight()

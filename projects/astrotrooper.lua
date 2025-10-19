@@ -6,10 +6,8 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
---@include astricunion/libs/guns.lua
 require("astrobase")
--- require("guns")
-require("astricunion/libs/guns.lua")
+require("guns")
 require("light")
 local astrosounds = require("sounds")
 
@@ -21,9 +19,7 @@ if SERVER then
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
-    --@include astricunion/bots/holos/astro_trooper_holos.lua
-    -- require("astroholos")
-    require("astricunion/bots/holos/astro_trooper_holos.lua")
+    require("astroholos")
     ---------------------------------
 
     -- States
