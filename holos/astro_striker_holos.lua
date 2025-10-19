@@ -7,6 +7,23 @@
 require("holos")
 
 -- Эта холка получила изменений больше чем людей на планете!
+-- макс: осталось еще подкорректировать :3
+
+local function blaster(angle)
+    local holo = hologram.createPart(
+        Holo(Rig(Vector(0,215,0), Angle(0, 90, 0))),
+        Holo(SubHolo(Vector(0,200,12),Angle(180,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(0,200,20),Angle(0,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(0,200,16),Angle(-90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(0,200,16),Angle(90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(0,215,26),Angle(180,90,0),"models/combine_dropship_container.mdl",Vector(0.275,0.275,0.275),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(0,285,17),Angle(90,90,0),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40))),
+        Holo(SubHolo(Vector(0,285,17),Angle(0,0,-90),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40)))
+    )
+    holo:setAngles(Angle(0, 0, angle))
+    return holo
+end
+
 
 body = {
     base = {
@@ -55,41 +72,10 @@ body = {
             Holo(SubHolo(Vector(0,150,27),Angle(180,-90,0),"models/props_combine/CombineTrain01a.mdl",Vector(0.175,0.4,0.15),false,Color(255,0,0,255),""))
         ),
         hologram.createPart(
-             Holo(Rig(Vector(0,215,0), Angle(0, 90, 0))),
-             Holo(SubHolo(Vector(0,200,12),Angle(180,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,200,20),Angle(0,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,200,16),Angle(-90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,200,16),Angle(90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,215,26),Angle(180,90,0),"models/combine_dropship_container.mdl",Vector(0.275,0.275,0.275),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,285,17),Angle(90,90,0),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40))),
-             Holo(SubHolo(Vector(0,285,17),Angle(0,0,-90),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40))),
-
-             Holo(SubHolo(Vector(0,215,-9),Angle(0,90,0),"models/hunter/blocks/cube025x025x025.mdl",Vector(1,1,1),false,Color(255,0,0,0))),
-             Holo(SubHolo(Vector(0,200,-5),Angle(0,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,200,-13),Angle(180,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,200,-9),Angle(90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,200,-9),Angle(-90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,215,-19),Angle(180,90,180),"models/combine_dropship_container.mdl",Vector(0.275,0.275,0.275),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-             Holo(SubHolo(Vector(0,285,-6),Angle(90,90,0),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40))),
-             Holo(SubHolo(Vector(0,285,-6),Angle(0,0,-90),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40))),
-
-              Holo(SubHolo(Vector(13,215,3),Angle(0,90,-90),"models/hunter/blocks/cube025x025x025.mdl",Vector(1,1,1),false,Color(255,0,0,0))),
-              Holo(SubHolo(Vector(13,200,-2),Angle(90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(13,200,7),Angle(-90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(13,200,3),Angle(0,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(13,200,3),Angle(180,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(23,215,0),Angle(180,90,-90),"models/combine_dropship_container.mdl",Vector(0.275,0.275,0.275),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(11,285,5),Angle(90,90,0),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40))),
-              Holo(SubHolo(Vector(11,285,5),Angle(0,0,-90),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40))),
-
-              Holo(SubHolo(Vector(-13,215,3),Angle(0,90,-90),"models/hunter/blocks/cube025x025x025.mdl",Vector(1,1,1),false,Color(255,0,0,0))),
-              Holo(SubHolo(Vector(-13,200,-2),Angle(90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(-13,200,7),Angle(-90,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(-13,200,3),Angle(0,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(-13,200,3),Angle(180,180,90),"models/props_combine/combinethumper001a.mdl",Vector(0.2,0.2,0.175),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(-23,215,0),Angle(180,90,90),"models/combine_dropship_container.mdl",Vector(0.275,0.275,0.275),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
-              Holo(SubHolo(Vector(-11,285,5),Angle(90,90,0),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40))),
-              Holo(SubHolo(Vector(-11,285,5),Angle(0,0,-90),"models/Items/combine_rifle_ammo01.mdl",Vector(2.25,2.25,3.25),false,Color(255,40,40)))
+            Holo(blaster(0)),
+            Holo(blaster(90)),
+            Holo(blaster(180)),
+            Holo(blaster(-90))
         )
     },
     rightarm = {
