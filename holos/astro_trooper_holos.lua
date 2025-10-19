@@ -6,6 +6,22 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/holos.lua as holos
 require("holos")
 
+
+local function blaster(offset)
+    local blaster = hologram.createPart(
+        Holo(SubHolo(Vector(-5,0,2),Angle(0,0,0),"models/hunter/blocks/cube025x025x025.mdl",Vector(1,1,1),false,Color(255,0,0,0))),
+        Holo(SubHolo(Vector(-28,0,-2),Angle(180,90,90),"models/props_combine/combinethumper001a.mdl",Vector(0.08,0.08,0.12),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(-28,0,6),Angle(0,90,90),"models/props_combine/combinethumper001a.mdl",Vector(0.08,0.08,0.12),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(-28,-5,2),Angle(-90,90,90),"models/props_combine/combinethumper001a.mdl",Vector(0.08,0.08,0.12),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(-28,5,2),Angle(90,90,90),"models/props_combine/combinethumper001a.mdl",Vector(0.08,0.08,0.12),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(-19,0,12),Angle(180,0,0),"models/combine_dropship_container.mdl",Vector(0.12,0.12,0.12),false,Color(255,40,40),"models/props_combine/metal_combinebridge001")),
+        Holo(SubHolo(Vector(25,0,2),Angle(90,0,0),"models/Items/combine_rifle_ammo01.mdl",Vector(1.8,1.8,1.8),false,Color(255,40,40)))
+    )
+    blaster:setPos(blaster:getPos() + offset)
+    return blaster
+end
+
+
 body = {
     base = {
         hologram.createPart(
@@ -41,5 +57,7 @@ body = {
         Holo(SubHolo(Vector(0,0,25),Angle(-90,0,0),"models/props_combine/combine_booth_short01a.mdl",Vector(0.22,0.22,0.16),false,Color(255,40,40))),
         Holo(SubHolo(Vector(5,0,20),Angle(-50,180,0),"models/props_combine/combine_booth_short01a.mdl",Vector(0.22,0.22,0.16),false,Color(255,0,0,255))),
         Holo(SubHolo(Vector(-3,0,31),Angle(-190,0,0),"models/props_combine/combine_booth_short01a.mdl",Vector(0.21,0.21,0.16),false,Color(255,40,40),"models/props_combine/metal_combinebridge001"))
-    )
+    ),
+    leftBlaster = blaster(Vector(0, 40, 0)),
+    rightBlaster = blaster(Vector(0, -40, 0))
 }

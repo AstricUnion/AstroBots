@@ -6,10 +6,14 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
+--@include astricunion/libs/guns.lua
 require("astrobase")
-require("guns")
+-- require("guns")
+require("astricunion/libs/guns.lua")
 require("light")
 local astrosounds = require("sounds")
+
+CHIPPOS = chip():getPos()
 
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
@@ -17,7 +21,9 @@ if SERVER then
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
-    require("astroholos")
+    --@include astricunion/bots/holos/astro_trooper_holos.lua
+    -- require("astroholos")
+    require("astricunion/bots/holos/astro_trooper_holos.lua")
     ---------------------------------
 
     -- States
@@ -49,11 +55,11 @@ if SERVER then
     end)
 
     -- Create bot parts --
-    local seat = prop.createSeat(chip():getPos() + Vector(0, 0, -6), Angle(), "models/nova/airboat_seat.mdl")
+    local seat = prop.createSeat(CHIPPOS + Vector(0, 0, -6), Angle(), "models/nova/airboat_seat.mdl")
     local size = Vector(25, 25, 10)
     local headsize = Vector(12, 12, 12)
-    local body_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, -7.5), Angle(), size, true)
-    local head_hitbox = hitbox.cube(chip():getPos() + Vector(0, 0, 25), Angle(), headsize, true)
+    local body_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, -7.5), Angle(), size, true)
+    local head_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, 25), Angle(), headsize, true)
     local astro = AstroBase:new(body_hitbox, head_hitbox, seat, 1000, Vector(10, 0, -5))
 
     -- Start sound --
@@ -63,9 +69,13 @@ if SERVER then
     end)
 
     -- Blasters --
+    local blasterHitboxes = {
+        left = hitbox.cube(CHIPPOS + Vector(0, 40, 0), Angle(), Vector(40, 8, 7), true),
+        right = hitbox.cube(CHIPPOS + Vector(0, -40, 0), Angle(), Vector(40, 8, 7), true)
+    }
     local blaster = {
-        left = Blaster:new(chip():getPos() + Vector(0, 40, 0)),
-        right = Blaster:new(chip():getPos() + Vector(0, -40, 0))
+        left = Blaster:new(body.leftBlaster, blasterHitboxes.left),
+        right = Blaster:new(body.rightBlaster, blasterHitboxes.right)
     }
     local ignore = {astro.body, astro.head, blaster.left.hitbox, blaster.right.hitbox}
     for _, ent in ipairs(ignore) do
@@ -105,18 +115,18 @@ if SERVER then
             local rads = math.rad(360 * fraction)
             local smoothed_x = math.sin(rads)
             local smoothed_y = math.cos(rads)
-            body.base[1]:setLocalPos(base_pos + Vector(smoothed_x, 0, smoothed_y))
-            astro.head:setLocalPos(head_pos + Vector(smoothed_x * 0.5, 0, smoothed_y * 0.5))
+            body.base[1]:setLocalPos(base_pos + Vector(smoothed_x * 3, 0, smoothed_y * 3))
+            astro.head:setLocalPos(head_pos + Vector((1 - smoothed_x) * 3, 0, (1 - smoothed_y) * -3))
         end,
         ["0-0.5"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(fraction)
-            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed))
-            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 0.5))
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 3))
+            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 3))
         end,
         ["0.5-1"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(1 - fraction)
-            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed))
-            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 0.5))
+            body.base[1]:setLocalAngles(body.base[1]:getLocalAngles():setP(smoothed * 3))
+            astro.head:setLocalAngles(astro.head:getLocalAngles():setP(smoothed * 3))
         end
     })
 

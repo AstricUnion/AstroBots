@@ -3,11 +3,13 @@
 --@shared
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
+--@include astricunion/libs/guns.lua
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
 require("astrobase")
 require("light")
 require("guns")
+require("astricunion/libs/guns.lua")
 local astrosounds = require("sounds")
 
 
@@ -280,7 +282,7 @@ if SERVER then
             Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeInOutBack),
             Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-50, -80, 0), math.easeInOutQuint),
             Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeInOutQuint, callback),
-            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(-1, -1, 1), math.easeInBack, function()
+            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(-2, -2, 2), math.easeInBack, function()
                 local pos = body.rightarm[3]:getPos()
                 local forward = body.rightarm[3]:getForward() * 50
                 local right = body.rightarm[1]:getRight() * 50
@@ -452,9 +454,9 @@ if SERVER then
         end)
         dashTween:add(
             Fraction:new(
-                1.8, math.easeOutSine, nil,
+                1.8, math.easeOutCubic, nil,
                 function(tween, f)
-                    astro.physobj:addVelocity(direction * 3000 * f)
+                    astro.physobj:addVelocity(direction * 700000 * (1 - f))
                     local pos = astro.body:getPos()
                     local up = astro.body:getUp() / 3
                     local right = astro.body:getRight()
@@ -676,32 +678,38 @@ if SERVER then
     end)
 else
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
-    require("ui")
+    --@include astricunion/libs/ui.lua
+    -- require("ui")
+    require("astricunion/libs/ui.lua")
 
-    ---@type Bar
-    local laserBar
-    ---@type Bar
-    local healthBar
-    ---@type Bar
-    local berserkBar
     ---@type number
     local laserCharge = 1
     ---@type number
     local berserkCharge = 0
 
-
+    ---Function to create HUD hooks
+    ---@param camerapoint Hologram
+    ---@param body Entity
     local function createHud(camerapoint, body)
+        ---@type Bar
+        local laserBar
+        ---@type Bar
+        local healthBar
+        ---@type Bar
+        local berserkBar
+
         hook.add("DrawHUD", "", function()
             local sw, sh = render.getGameResolution()
             ---- Aim ----
-            render.drawCircle(sw / 2, sh / 2, 1)
+            local pos = (camerapoint:getPos() + camerapoint:getForward() * 100):toScreen()
+            render.drawCircle(pos.x, pos.y, 5)
 
             ---- Laser ----
             if !laserBar then
                 laserBar = Bar:new(sw * 0.15, sh * 0.8, 200, 30, 1)
                     :setLabelLeft("LASER")
             end
-            laserBar:setLabelRight(tostring(math.round(laserBar.current_percent * 100)) .. "%")
+            laserBar:setLabelRight(tostring(math.round(laserBar.percent * 100)) .. "%")
                 :setPercent(laserCharge)
                 :draw()
 
@@ -710,7 +718,7 @@ else
                 healthBar = Bar:new(sw / 2 - 100, sh * 0.8, 200, 30, 1)
                     :setLabelLeft("HP")
             end
-            local current = healthBar.current_percent
+            local current = healthBar.percent
             healthBar:setLabelRight(tostring(body:getHealth()) .. "%")
                 :setPercent(body:getHealth() / INITIAL_HEALTH)
                 :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
@@ -720,18 +728,27 @@ else
             if !berserkBar then
                 berserkBar = Bar:new(sw / 2 - 100, sh * 0.7, 200, 30, 0)
                     :setLabelLeft("BERSERK")
-            end local inverseCurrent = 1 - berserkCharge
+            end
+            local inverseCurrent = 1 - berserkCharge
             berserkBar:setLabelRight(tostring(berserkCharge * 100) .. "%")
                 :setPercent(berserkCharge)
                 :setBarColor(Color(255, 255 * inverseCurrent, 255 * inverseCurrent, 255))
                 :draw()
         end)
 
+        local lastPos = body:getPos()
+        local fovOffset = 0
+        local slop = 0
         hook.add("CalcView", "", function(_, ang)
+            local pos = body:getPos()
+            local velocity = (pos - lastPos):getRotated(-body:getAngles())
+            lastPos = pos
+            fovOffset = math.lerp(0.1, fovOffset, (velocity.x + math.abs(velocity.y) + velocity.z) / 10)
+            slop = math.lerp(0.2, slop, -velocity.y / 20)
             return {
                 origin = camerapoint:getPos(),
-                angles = ang + camerapoint:getLocalAngles(),
-                fov = 120
+                angles = ang + camerapoint:getLocalAngles() + Angle(0, 0, slop),
+                fov = 120 + fovOffset
             }
         end)
     end
@@ -752,4 +769,3 @@ else
         berserkCharge = net.readInt(8) / 100
     end)
 end
-
