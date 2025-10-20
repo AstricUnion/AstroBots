@@ -14,7 +14,7 @@ local astrosounds = require("sounds")
 
 do
     ---Initial health. Can be edited
-    INITIAL_HEALTH = INITIAL_HEALTH or 10
+    INITIAL_HEALTH = INITIAL_HEALTH or 6500
 
     ---Initial speed. Can be edited
     INITIAL_SPEED = INITIAL_SPEED or 200
