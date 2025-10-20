@@ -15,7 +15,9 @@ CHIPPOS = chip():getPos()
 
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
+    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/hitbox.lua as hitbox
     require("ftimers")
+    local hitbox = require("hitbox")
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos

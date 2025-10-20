@@ -14,34 +14,34 @@ local astrosounds = require("sounds")
 
 do
     ---Initial health. Can be edited
-    INITIAL_HEALTH = 6500
+    INITIAL_HEALTH = INITIAL_HEALTH or 6500
 
     ---Initial speed. Can be edited
-    INITIAL_SPEED = 200
+    INITIAL_SPEED = INITIAL_SPEED or 200
 
     ---Initial sprint. Can be edited
-    INITIAL_SPRINT = 600
+    INITIAL_SPRINT = INITIAL_SPRINT or 600
 
     ---Initial laser damage. Can be edited
-    INITIAL_LASER_DAMAGE = 5
+    INITIAL_LASER_DAMAGE = INITIAL_LASER_DAMAGE or 5
 
     ---Initial laser radius. Can be edited
-    INITIAL_LASER_RADIUS = 7.5
+    INITIAL_LASER_RADIUS = INITIAL_LASER_RADIUS or 7.5
 
     ---Initial punch damage. Can be edited
-    INITIAL_PUNCH_DAMAGE = 350
+    INITIAL_PUNCH_DAMAGE = INITIAL_PUNCH_DAMAGE or 350
 
     ---Initial claws damage. Can be edited
-    INITIAL_CLAWS_DAMAGE = 600
+    INITIAL_CLAWS_DAMAGE = INITIAL_CLAWS_DAMAGE or 600
 
     ---Initial dash claws damage. Can be edited
-    INITIAL_DASH_CLAWS_DAMAGE = INITIAL_CLAWS_DAMAGE * 2
+    INITIAL_DASH_CLAWS_DAMAGE = INITIAL_DASH_CLAWS_DAMAGE or INITIAL_CLAWS_DAMAGE * 2
 
     ---Berserk required damage. Can be edited
-    BERSERK_REQUIRED_DAMAGE = 3200
+    BERSERK_REQUIRED_DAMAGE = BERSERK_REQUIRED_DAMAGE or 3200
 
     ---Berserk max time
-    BERSERK_MAX_TIME = 12
+    BERSERK_MAX_TIME = BERSERK_MAX_TIME or 12
 end
 
 
@@ -50,8 +50,10 @@ CHIPPOS = chip():getPos()
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
+    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/hitbox.lua as hitbox
     require("ftimers")
     require("tweens")
+    local hitbox = require("hitbox")
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_scout_holos.lua as astroholos
@@ -103,9 +105,9 @@ if SERVER then
 
     ---@type Vehicle
     local seat = prop.createSeat(CHIPPOS + Vector(0, 0, 20), Angle(), "models/nova/airboat_seat.mdl")
-    local size = Vector(80, 80, 20)
+    local size = Vector(80, 80, 40)
     local headsize = Vector(30, 30, 30)
-    local body_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, 10), Angle(), size, true)
+    local body_hitbox = hitbox.cylinder(CHIPPOS + Vector(0, 0, 10), Angle(), size, true)
     local head_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, 60), Angle(), headsize, true)
     local astro = AstroBase:new(
         body_hitbox,
@@ -457,11 +459,10 @@ if SERVER then
         end)
         dashTween:add(
             Fraction:new(
-                1.8, math.easeOutCubic, nil,
+                1.8, math.easeOutSine, nil,
                 function(tween, f)
-                    -- this don't work, idk why, but i guess it's ticks make something --
-                    astro.physobj:addVelocity(direction * 700000 * (1 - f))
-                    ---------------------------------------------------------------------
+                    local velo = direction * 70000
+                    astro.velocity = (velo * (1 - f)) + direction * 400
                     local pos = astro.body:getPos()
                     local up = astro.body:getUp() / 3
                     local right = astro.body:getRight()
@@ -471,14 +472,10 @@ if SERVER then
                         pos + ((forward * 10) + up + right) * 40
                     )
                     for _, ent in ipairs(entsToDamage) do
-                        if ent == astro.body
-                          or ent == astro.head
-                          or ent == astro.driver
-                          or ent == astro.seat
-                          or table.hasValue(arms_list, ent) then
-                            continue
-                        end
-                        if isValid(ent) and ent:isValidPhys() then
+                        local ignore = table.add({astro.body, astro.head, astro.driver, astro.seat}, arms_list)
+                        if table.hasValue(ignore, ent) then continue end
+                        if isValid(ent) and ent:isValidPhys() and ent:getHealth() > 0 then
+                            astro.velocity = Vector() / 100
                             astro:setState(STATES.Attack)
                             astrosounds.play("punchClaws", Vector(), body.rightarm[2])
                             tween:remove()

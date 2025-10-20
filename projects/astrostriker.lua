@@ -2,8 +2,10 @@
 --@author AstricUnion
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
+--@include astricunion/libs/guns.lua
 require("astrobase")
-require("guns")
+-- require("guns")
+require("astricunion/libs/guns.lua")
 
 
 do
@@ -18,8 +20,10 @@ end
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
+    --@include astricunion/libs/tweens.lua
     require("ftimers")
-    require("tweens")
+    -- require("tweens")
+    require("astricunion/libs/tweens.lua")
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include astricunion/bots/holos/astro_striker_holos.lua
@@ -30,7 +34,8 @@ if SERVER then
     local STATES = {
         Idle = 0,
         Attack = 1,
-        Blasters = 2
+        Blasters = 2,
+        Block = 3
     }
 
     ---@type Vehicle
@@ -83,8 +88,23 @@ if SERVER then
         end
     })
 
+
+    
+    -- Function to attack
+    local function attackDamage(attacked)
+        local armPos = body.rightarm[2]:getPos()
+        local armForward = body.rightarm[2]:getForward()
+        local armUp = body.rightarm[2]:getUp()
+        local armRight = body.rightarm[2]:getRight()
+        local radius = 80
+        local damage = INITIAL_WEAK_DAMAGE
+        local box = (armUp + armRight + (armForward * 2)) * radius
+        return AttackDamage(armPos - box, armPos + box, armForward, damage, body.rightarm[2], {astro.body}, attacked)
+    end
+
     local function mainAttack1()
         astro:setState(STATES.Attack)
+        local attacked = {}
         local tween = Tween:new()
         tween:add(
             Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeOutCubic),
@@ -95,7 +115,9 @@ if SERVER then
         tween:add(
             Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutCubic),
             Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, 20, -90), math.easeOutCubic),
-            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-30, 0, 0), math.easeOutCubic),
+            Param:new(0.1, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-20, 0, 0), math.easeOutQuint, nil, function()
+                attackDamage(attacked)
+            end),
             Param:new(0.1, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 1, -1), math.easeOutCubic)
         )
         tween:sleep(0.1)
@@ -114,6 +136,7 @@ if SERVER then
     local function mainAttack2()
         astro:setState(STATES.Attack)
         local tween = Tween:new()
+        local attacked = {}
         tween:add(
             Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeOutCubic),
             Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-60, -80, -90), math.easeOutCubic),
@@ -122,7 +145,9 @@ if SERVER then
         )
         tween:add(
             Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutCubic),
-            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(20, 20, -90), math.easeOutCubic),
+            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(20, 20, -90), math.easeOutCubic, function()
+                attackDamage(attacked)
+            end),
             Param:new(0.1, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 1, -1), math.easeOutCubic)
         )
         tween:sleep(0.1)
@@ -147,6 +172,7 @@ if SERVER then
         return body.base[1]:worldToLocalAngles((res.HitPos - body.leftarm[1]:getPos()):getAngle())
     end
 
+
     -- Blasters animation
     local function blastersOn()
         if BLASTERS_ANIMATION then BLASTERS_ANIMATION:remove() end
@@ -154,8 +180,8 @@ if SERVER then
         BLASTERS_ANIMATION = Tween:new()
         BLASTERS_ANIMATION:add(
             Param:new(0.5, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -30, -10), math.easeInOutCirc),
-            Fraction:new(1.5, math.easeInQuint, nil, function(_, f)
-                body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 1000 * f))
+            Fraction:new(1.5, math.easeInSine, nil, function(_, f)
+                body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 400 * f))
             end),
             Param:new(0.2, body.leftarm[1], PROPERTY.LOCALANGLES, getBlastersAngle, math.easeInOutCubic, function()
                 BLASTERS_CONTROL = true
@@ -174,8 +200,8 @@ if SERVER then
         BLASTERS_ANIMATION:sleep(0.3)
         BLASTERS_ANIMATION:add(
             Param:new(0.5, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCirc),
-            Fraction:new(0.5, math.easeInOutQuint, nil, function(_, f)
-                body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 1000 * (1 - f)))
+            Fraction:new(1.5, math.easeInSine, nil, function(_, f)
+                body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 400 * (1 - f)))
             end),
             Param:new(0.5, body.leftarm[1], PROPERTY.LOCALANGLES, Angle(40, 120, 120), math.easeInOutQuad, function()
                 astro:setState(STATES.Idle)
@@ -188,11 +214,19 @@ if SERVER then
 
 
     -- Movement think --
-    hook.add("AstroThink", "Movement", function(as, _)
+    hook.add("AstroThink", "Laser", function(as, _)
         if as ~= astro then return end
         if astro:getState() == STATES.Blasters and BLASTERS_CONTROL then
             local res = astro:eyeTrace()
             if !res then return end
+            if game.getTickCount() % 5 == 0 then
+                BlasterProjectile:new({},
+                    body.leftarm[2]:getPos() + body.leftarm[2]:getUp() * 16 + body.leftarm[2]:getForward() * 50,
+                    body.leftarm[2]:getAngles(),
+                    2,
+                    10000
+                )
+            end
             body.leftarm[1]:setAngles(
                 math.lerpAngle(
                     0.5,
@@ -203,26 +237,108 @@ if SERVER then
         end
     end)
 
+
+    local BLOCK_ANIMATION
+    local function armBlock()
+        astro:setState(STATES.Block)
+        if BLOCK_ANIMATION then BLOCK_ANIMATION:remove() end
+        BLOCK_ANIMATION = Tween:new()
+        BLOCK_ANIMATION:add(
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, 20, -60), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-90, 0, 45), math.easeInOutQuint)
+        )
+        BLOCK_ANIMATION:start()
+    end
+
+    local function armUnblock()
+        if BLOCK_ANIMATION then BLOCK_ANIMATION:remove() end
+        BLOCK_ANIMATION = Tween:new()
+        BLOCK_ANIMATION:add(
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutQuint, function()
+                astro:setState(STATES.Idle)
+            end)
+        )
+        BLOCK_ANIMATION:start()
+    end
+
+    hook.add("AstroDamage", "BlockStuff", function(as, amount)
+        if as ~= astro then return end
+        if astro:getState() == STATES.Block then
+            return amount * -0.1
+        end
+    end)
+
+
+    local CAN_DASH = true
+
+    local function dash()
+        if !CAN_DASH then return end
+        CAN_DASH = false
+        astro:setState(STATES.Dash)
+        local direction = astro:getDirection()
+        if !direction then return end
+        direction = direction:isZero() and astro.body:getForward() or direction
+        local dashTween = Tween:new()
+        dashTween:add(
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, 20, -80), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-60, 0, 45), math.easeInOutQuint)
+        )
+        dashTween:add(
+            Fraction:new(
+                1.8, math.easeOutSine,
+                function()
+                    timer.simple(3, function()
+                        CAN_DASH = true
+                    end)
+                end,
+                function(_, f)
+                    local velo = direction * 70000
+                    astro.velocity = (velo * (1 - f)) + direction * 400
+                end
+            )
+        )
+        dashTween:add(
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutQuint, function()
+                astro:setState(STATES.Idle)
+            end)
+        )
+        dashTween:start()
+    end
+
+
+
     hook.add("InputPressed", "", function(ply, key)
         if ply ~= astro.driver then return end
         if astro:getState() ~= STATES.Idle then return end
 
         -- Main attack: RMB
         if key == MOUSE.MOUSE2 then
-            if math.random(1, 100) >= 55 then mainAttack1()
-            else mainAttack2() end
+            if math.random(1, 100) >= 55 then
+                mainAttack1()
+            else
+                mainAttack2()
+            end
 
         -- Blasters: LMB
-        elseif key == MOUSE.MOUSE1 then
-            blastersOn()
-        end
+        elseif key == MOUSE.MOUSE1 then blastersOn()
+
+        -- Block: Mouse Wheel
+        elseif key == MOUSE.MOUSE3 then armBlock()
+
+        -- Dash: G
+        elseif key == KEY.G then dash() end
     end)
 
     hook.add("InputReleased", "", function(ply, key)
         if ply ~= astro.driver then return end
-        if key == MOUSE.MOUSE1 and astro:getState() == STATES.Blasters then
-            blastersOff()
-        end
+        
+        -- Blasters
+        if key == MOUSE.MOUSE1 and astro:getState() == STATES.Blasters then blastersOff()
+
+        -- Block
+        elseif key == MOUSE.MOUSE3 and astro:getState() == STATES.Block then armUnblock() end
     end)
 else
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
