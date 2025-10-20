@@ -4,8 +4,8 @@
 
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/sounds.lua as sounds
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
---@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
 require("astrobase")
 require("guns")
 require("light")
@@ -15,7 +15,9 @@ CHIPPOS = chip():getPos()
 
 if SERVER then
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
+    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
     --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/hitbox.lua as hitbox
+    require("tweens")
     require("ftimers")
     local hitbox = require("hitbox")
 
@@ -114,7 +116,7 @@ if SERVER then
             local smoothed_x = math.sin(rads)
             local smoothed_y = math.cos(rads)
             body.base[1]:setLocalPos(base_pos + Vector(smoothed_x * 3, 0, smoothed_y * 3))
-            astro.head:setLocalPos(head_pos + Vector((1 - smoothed_x) * 3, 0, (1 - smoothed_y) * -3))
+            astro.head:setLocalPos(head_pos + Vector((1 - smoothed_x) * 1, 0, (1 - smoothed_y) * -1))
         end,
         ["0-0.5"] = function(_, _, fraction)
             local smoothed = math.easeInOutSine(fraction)
@@ -129,11 +131,13 @@ if SERVER then
     })
 
 
-    -- Movement hook. There is all movement (blaster rotation, astro.head rotation, movement object think) --
+    -- Movement hook --
     hook.add("AstroThink", "BlasterMovement", function()
         if astro.state == STATES.Idle and blaster.left:isAlive() and blaster.right:isAlive() then
             local eyeTrace = astro:eyeTrace()
             if !eyeTrace then return end
+            local hitPos = eyeTrace.HitPos
+            ---@cast hitPos Vector
             if blaster.left:isAlive() then
                 blaster.left.hitbox:setAngles((eyeTrace.HitPos - blaster.left.hitbox:getPos()):getAngle())
             end
@@ -190,6 +194,52 @@ if SERVER then
         )
     end
 
+
+    local function dash()
+        can_dash = false
+        astro:setState(STATES.Dash)
+        local direction
+        astrosounds.play("dash", Vector(), astro.body)
+        local dashTween = Tween:new()
+        dashTween:add(
+            Param:new(0.8, blaster.left:isAlive() and blaster.left.hitbox, PROPERTY.LOCALANGLES, Angle(-180, 0, 0), math.easeInOutSine),
+            Param:new({0.2, 1}, blaster.right:isAlive() and blaster.right.hitbox, PROPERTY.LOCALANGLES, Angle(-180, 0, 0), math.easeInOutSine, function()
+                direction = astro:getDirection()
+                direction = !direction or direction:isZero() and astro.body:getForward() or direction
+            end)
+        )
+        dashTween:add(
+            Fraction:new(
+                1.4, math.easeOutSine, nil,
+                function(_, f)
+                    local velo = direction * 70000
+                    astro.velocity = (velo * (1 - f)) + direction * 400
+                    local pos = astro.body:getPos()
+                    local damage = find.inBox(
+                        pos + Vector(0, 50, 50) * direction, pos + Vector(200, -50, -50) * direction,
+                        function(ent) return isValid(ent) and isValid(ent:getPhysicsObject()) and not table.hasValue(ignore, ent) end
+                    )
+                    for _, ent in ipairs(damage) do
+                        local permited, _ = hasPermission("entities.applyDamage", ent)
+                        if permited then
+                            ent:applyDamage(50)
+                        end
+                    end
+                end
+            )
+        )
+        dashTween:add(
+            Param:new(0.8, blaster.left:isAlive() and blaster.left.hitbox, PROPERTY.LOCALANGLES, Angle(0, 0, 0), math.easeInOutSine),
+            Param:new({0.2, 1}, blaster.right:isAlive() and blaster.right.hitbox, PROPERTY.LOCALANGLES, Angle(0, 0, 0), math.easeInOutSine, function()
+                timer.simple(3, function()
+                    can_dash = true
+                end)
+                astro:setState(STATES.Idle)
+            end)
+        )
+        dashTween:start()
+    end
+
     hook.add("InputPressed", "Controls", function(ply, key)
         if ply ~= astro.driver then return end
         if astro.state ~= STATES.Idle then return end
@@ -214,57 +264,7 @@ if SERVER then
 
         -- Mouse2: Dash --
         elseif key == MOUSE.MOUSE2 and can_dash then
-            can_dash = false
-            astro.state = STATES.Dash
-            local velocity = 30000
-            local direction
-            astrosounds.play("dash", Vector(), astro.body)
-            FTimer:new(3.5, 1, {
-                ["0-0.25"] = blaster.left:isAlive() and function(_, _, fraction)
-                    local smoothed = math.easeInOutSine(fraction)
-                    local ang = -180 * smoothed
-                    blaster.left.hitbox:setLocalAngles(Angle(ang, 0, 0))
-                end or nil,
-                [0.25] = function()
-                    direction = astro:getDirection()
-                    direction = direction:isZero() and astro.body:getForward() or direction
-                end,
-                ["0.1-0.3"] = blaster.right:isAlive() and function(_, _, fraction)
-                    local smoothed = math.easeInOutSine(fraction)
-                    local ang = -180 * smoothed
-                    blaster.right.hitbox:setLocalAngles(Angle(ang, 0, 0))
-                end or nil,
-                ["0.3-0.7"] = function()
-                    velocity = math.lerp(0.1, velocity, 0)
-                    astro.body:addVelocity(direction * velocity)
-                    local damage = find.inBox(
-                        astro.body:getPos() + Vector(0, 50, 50), astro.body:getPos() + Vector(200, -50, -50),
-                        function(ent) return isValid(ent) and isValid(ent:getPhysicsObject()) and not table.hasValue(ignore, ent) end
-                    )
-                    for _, ent in ipairs(damage) do
-                        local permited, _ = hasPermission("entities.applyDamage", ent)
-                        if permited then
-                            ent:applyDamage(50)
-                        end
-                    end
-                end,
-                ["0.7-0.9"] = blaster.left:isAlive() and function(_, _, fraction)
-                    local smoothed = math.easeInOutSine(1 - fraction)
-                    local ang = -180 * smoothed
-                    blaster.left.hitbox:setLocalAngles(Angle(ang, 0, 0))
-                end or nil,
-                ["0.8-1"] = blaster.right:isAlive() and function(_, _, fraction)
-                    local smoothed = math.easeInOutSine(1 - fraction)
-                    local ang = -180 * smoothed
-                    blaster.right.hitbox:setLocalAngles(Angle(ang, 0, 0))
-                end or nil,
-                [1] = function()
-                    astro.state = STATES.Idle
-                    timer.simple(3, function()
-                        can_dash = true
-                    end)
-                end
-            })
+            dash()
         end
     end)
 
@@ -301,7 +301,7 @@ if SERVER then
         body.base[4]:setLocalAngularVelocity(Angle())
 
         -- Remove hooks
-        hook.remove("Think", "Movement")
+        hook.remove("AstroThink", "BlasterMovement")
         hook.remove("PostEntityTakeDamage", "blasters")
         hook.remove("AstroDeath", "death")
 
@@ -321,11 +321,12 @@ else
     local blasterRightAmmo = 4
     local blasterLeftHealth = 500
     local blasterRightHealth = 500
-    local healthBar
-    local blasterLeftBar
-    local blasterRightBar
 
-    local function createHud(camerapoint, body)
+    local function createHud(_, body)
+        local healthBar
+        local blasterLeftBar
+        local blasterRightBar
+
         hook.add("DrawHUD", "", function()
             local sw, sh = render.getGameResolution()
 
@@ -366,19 +367,10 @@ else
             end
         end)
 
-        hook.add("CalcView", "", function(_, ang)
-            return {
-                origin = camerapoint:getPos(),
-                angles = ang,
-                fov = 120
-            }
-        end)
     end
 
     local function removeHud()
         hook.remove("DrawHUD", "")
-        hook.remove("CalcView", "")
-        hook.remove("InputPressed", "")
     end
 
     hook.add("AstroEntered", "", createHud)

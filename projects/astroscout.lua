@@ -14,7 +14,7 @@ local astrosounds = require("sounds")
 
 do
     ---Initial health. Can be edited
-    INITIAL_HEALTH = INITIAL_HEALTH or 6500
+    INITIAL_HEALTH = INITIAL_HEALTH or 10
 
     ---Initial speed. Can be edited
     INITIAL_SPEED = INITIAL_SPEED or 200
@@ -442,6 +442,21 @@ if SERVER then
         end)
     end
 
+    local function createDashEffectHolo(pos, parent)
+        local holo = hologram.create(pos, Angle(), "models/hunter/plates/plate.mdl")
+        if !holo then return end
+        holo:setParent(parent)
+        holo:setTrails(32, 0, 2, "trails/laser", Color(255, 0, 0))
+        holo:setColor(Color(0, 0, 0, 0))
+        timer.simple(1.8, function()
+            holo:setParent(nil)
+            timer.simple(3, function()
+                holo:remove()
+            end)
+        end)
+        return holo
+    end
+
     local function dash()
         if !CAN_DASH then return end
         CAN_DASH = false
@@ -456,7 +471,18 @@ if SERVER then
         local dashTween = Tween:new()
         clawsAttackSwing(dashTween, function()
             astrosounds.play("dash", Vector(), astro.body)
+            local positions = {
+                Vector(-50, 72, 0),
+                Vector(-60, 0, 0),
+                Vector(-50, -72, 0),
+            }
+            local angles = direction:getAngle()
+            local body_pos = body.base[1]:getPos()
+            for _, pos in ipairs(positions) do
+                createDashEffectHolo(body_pos + pos:getRotated(angles), body.base[1])
+            end
         end)
+        local ignore = table.add({astro.body, astro.head, astro.driver, astro.seat}, arms_list)
         dashTween:add(
             Fraction:new(
                 1.8, math.easeOutSine, nil,
@@ -464,24 +490,15 @@ if SERVER then
                     local velo = direction * 70000
                     astro.velocity = (velo * (1 - f)) + direction * 400
                     local pos = astro.body:getPos()
-                    local up = astro.body:getUp() / 3
-                    local right = astro.body:getRight()
-                    local forward = astro.body:getForward()
-                    local entsToDamage = find.inBox(
-                        pos - (up + right - forward) * 40,
-                        pos + ((forward * 10) + up + right) * 40
-                    )
-                    for _, ent in ipairs(entsToDamage) do
-                        local ignore = table.add({astro.body, astro.head, astro.driver, astro.seat}, arms_list)
-                        if table.hasValue(ignore, ent) then continue end
-                        if isValid(ent) and ent:isValidPhys() and ent:getHealth() > 0 then
-                            astro.velocity = Vector() / 100
-                            astro:setState(STATES.Attack)
-                            astrosounds.play("punchClaws", Vector(), body.rightarm[2])
-                            tween:remove()
-                            attackTween:start()
-                            return
-                        end
+                    local box = Vector(100, 100, 20):getRotated(direction:getAngle())
+                    local hit = trace.hull(pos, pos + direction * 150, box, -box, ignore)
+                    if hit.StartPos:getDistance(hit.HitPos) < 40 then
+                        astro.velocity = Vector() / 100
+                        astro:setState(STATES.Attack)
+                        astrosounds.play("punchClaws", Vector(), body.rightarm[2])
+                        tween:remove()
+                        attackTween:start()
+                        return
                     end
                 end
             )
@@ -735,27 +752,10 @@ else
                 :setBarColor(Color(255, 255 * inverseCurrent, 255 * inverseCurrent, 255))
                 :draw()
         end)
-
-        local lastPos = body:getPos()
-        local fovOffset = 0
-        local slop = 0
-        hook.add("CalcView", "", function(_, ang)
-            local pos = body:getPos()
-            local velocity = (pos - lastPos):getRotated(-body:getAngles())
-            lastPos = pos
-            fovOffset = math.lerp(0.1, fovOffset, (velocity.x + math.abs(velocity.y) + velocity.z) / 10)
-            slop = math.lerp(0.2, slop, -velocity.y / 20)
-            return {
-                origin = camerapoint:getPos(),
-                angles = ang + camerapoint:getLocalAngles() + Angle(0, 0, slop),
-                fov = 120 + fovOffset
-            }
-        end)
     end
 
     local function removeHud()
         hook.remove("DrawHUD", "")
-        hook.remove("CalcView", "")
     end
 
     hook.add("AstroEntered", "", createHud)
