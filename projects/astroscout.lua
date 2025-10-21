@@ -5,11 +5,18 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/hitbox.lua as hitbox
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
+--@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_scout_holos.lua as astroholos
+
+-- Shared libs --
 require("astrobase")
 require("light")
 require("guns")
 local astrosounds = require("sounds")
-
+-----------------
 
 
 do
@@ -48,16 +55,12 @@ end
 
 CHIPPOS = chip():getPos()
 if SERVER then
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/hitbox.lua as hitbox
+    -- Server libs --
     require("ftimers")
     require("tweens")
-    local hitbox = require("hitbox")
-
-    -- THIS FILE CREATES HOLOGRAMS --
-    --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_scout_holos.lua as astroholos
     require("astroholos")
+    local hitbox = require("hitbox")
+    -----------------
 
 
     -- Preload sounds
@@ -696,8 +699,9 @@ if SERVER then
         end
     end)
 else
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
+    -- Client libs --
     require("ui")
+    -----------------
 
     ---@type number
     local laserCharge = 1

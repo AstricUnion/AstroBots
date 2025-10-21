@@ -2,10 +2,12 @@
 --@author AstricUnion
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
---@include astricunion/libs/guns.lua
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/hitbox.lua as hitbox
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
 require("astrobase")
--- require("guns")
-require("astricunion/libs/guns.lua")
+require("guns")
 
 
 do
@@ -18,12 +20,9 @@ end
 
 
 if SERVER then
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
-    --@include astricunion/libs/tweens.lua
     require("ftimers")
-    -- require("tweens")
-    require("astricunion/libs/tweens.lua")
+    require("tweens")
+    local hitbox = require("hitbox")
 
     -- THIS FILE CREATES HOLOGRAMS --
     --@include astricunion/bots/holos/astro_striker_holos.lua
@@ -341,13 +340,12 @@ if SERVER then
         elseif key == MOUSE.MOUSE3 and astro:getState() == STATES.Block then armUnblock() end
     end)
 else
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
     require("ui")
 
-    ---@type Bar
-    local healthBar
+    local function createHud(_, body)
+        ---@type Bar
+        local healthBar
 
-    local function createHud(camerapoint, body)
         hook.add("DrawHUD", "", function()
             local sw, sh = render.getGameResolution()
             ---- Aim ----
@@ -358,25 +356,16 @@ else
                 healthBar = Bar:new(sw / 2 - 100, sh * 0.8, 200, 30, 1)
                     :setLabelLeft("HP")
             end
-            local current = healthBar.current_percent
+            local current = healthBar.percent
             healthBar:setLabelRight(tostring(body:getHealth()) .. "%")
                 :setPercent(body:getHealth() / INITIAL_HEALTH)
                 :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
                 :draw()
         end)
-
-        hook.add("CalcView", "", function(_, ang)
-            return {
-                origin = camerapoint:getPos(),
-                angles = ang + camerapoint:getLocalAngles(),
-                fov = 120
-            }
-        end)
     end
 
     local function removeHud()
         hook.remove("DrawHUD", "")
-        hook.remove("CalcView", "")
     end
 
     hook.add("AstroEntered", "", createHud)

@@ -6,25 +6,28 @@
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/light.lua as light
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/guns.lua as guns
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/astrobase.lua as astrobase
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/hitbox.lua as hitbox
+--@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
+--@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
+
+-- Shared libs --
 require("astrobase")
 require("guns")
 require("light")
 local astrosounds = require("sounds")
+-----------------
 
 CHIPPOS = chip():getPos()
 
 if SERVER then
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ftimers.lua as ftimers
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/tweens.lua as tweens
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/hitbox.lua as hitbox
+    -- Server libs --
     require("tweens")
     require("ftimers")
-    local hitbox = require("hitbox")
-
-    -- THIS FILE CREATES HOLOGRAMS --
-    --@include https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/holos/astro_trooper_holos.lua as astroholos
     require("astroholos")
-    ---------------------------------
+    local hitbox = require("hitbox")
+    -----------------
 
     -- States
     local STATES = {
@@ -56,9 +59,9 @@ if SERVER then
 
     -- Create bot parts --
     local seat = prop.createSeat(CHIPPOS + Vector(0, 0, -6), Angle(), "models/nova/airboat_seat.mdl")
-    local size = Vector(25, 25, 10)
+    local size = Vector(35, 35, 20)
     local headsize = Vector(12, 12, 12)
-    local body_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, -7.5), Angle(), size, true)
+    local body_hitbox = hitbox.cylinder(CHIPPOS + Vector(0, 0, 0), Angle(), size, true)
     local head_hitbox = hitbox.cube(CHIPPOS + Vector(0, 0, 25), Angle(), headsize, true)
     local astro = AstroBase:new(body_hitbox, head_hitbox, seat, 1000, Vector(10, 0, -5))
 
@@ -195,6 +198,21 @@ if SERVER then
     end
 
 
+    local function createDashEffectHolo(pos, parent)
+        local holo = hologram.create(pos, Angle(), "models/hunter/plates/plate.mdl")
+        if !holo then return end
+        holo:setParent(parent)
+        holo:setTrails(32, 0, 2, "trails/laser", Color(255, 0, 0))
+        holo:setColor(Color(0, 0, 0, 0))
+        timer.simple(1.8, function()
+            holo:setParent(nil)
+            timer.simple(3, function()
+                holo:remove()
+            end)
+        end)
+        return holo
+    end
+
     local function dash()
         can_dash = false
         astro:setState(STATES.Dash)
@@ -202,10 +220,13 @@ if SERVER then
         astrosounds.play("dash", Vector(), astro.body)
         local dashTween = Tween:new()
         dashTween:add(
-            Param:new(0.8, blaster.left:isAlive() and blaster.left.hitbox, PROPERTY.LOCALANGLES, Angle(-180, 0, 0), math.easeInOutSine),
+            Param:new(0.8, blaster.left:isAlive() and blaster.left.hitbox, PROPERTY.LOCALANGLES, Angle(-180, 0, 0), math.easeInOutSine, function()
+                createDashEffectHolo(blaster.left.hitbox:getPos(), blaster.right.hitbox)
+            end),
             Param:new({0.2, 1}, blaster.right:isAlive() and blaster.right.hitbox, PROPERTY.LOCALANGLES, Angle(-180, 0, 0), math.easeInOutSine, function()
                 direction = astro:getDirection()
                 direction = !direction or direction:isZero() and astro.body:getForward() or direction
+                createDashEffectHolo(blaster.right.hitbox:getPos(), blaster.right.hitbox)
             end)
         )
         dashTween:add(
@@ -215,9 +236,9 @@ if SERVER then
                     local velo = direction * 70000
                     astro.velocity = (velo * (1 - f)) + direction * 400
                     local pos = astro.body:getPos()
-                    local damage = find.inBox(
-                        pos + Vector(0, 50, 50) * direction, pos + Vector(200, -50, -50) * direction,
-                        function(ent) return isValid(ent) and isValid(ent:getPhysicsObject()) and not table.hasValue(ignore, ent) end
+                    local damage = find.inCone(
+                        pos, direction, 200, 0.7,
+                        function(ent) return isValid(ent) and ent:getHealth() > 0 and !table.hasValue(ignore, ent) end
                     )
                     for _, ent in ipairs(damage) do
                         local permited, _ = hasPermission("entities.applyDamage", ent)
@@ -304,6 +325,7 @@ if SERVER then
         hook.remove("AstroThink", "BlasterMovement")
         hook.remove("PostEntityTakeDamage", "blasters")
         hook.remove("AstroDeath", "death")
+        hook.remove("InputPressed", "Controls")
 
         -- Remove lights
         removeLight("Main")
@@ -314,8 +336,9 @@ if SERVER then
     end)
 
 else
-    --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/ui.lua as ui
+    -- Client libs --
     require("ui")
+    -----------------
 
     local blasterLeftAmmo = 4
     local blasterRightAmmo = 4
@@ -339,7 +362,7 @@ else
                 healthBar = Bar:new(sw / 2 - 100, sh * 0.8, 200, 30, 1)
                     :setLabelLeft("HP")
             end
-            local current = healthBar.current_percent
+            local current = healthBar.percent
             healthBar:setPercent(health)
                 :setLabelRight(tostring(body:getHealth()) .. "%")
                 :setBarColor(Color(255, 255, 255, 255) * Color(1, current, current, 1))
