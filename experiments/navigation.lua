@@ -15,23 +15,6 @@ timer.create("lol", 0.01, 0, function()
     local nav = navmesh.getNavArea(vehicle:getPos(), 1000)
     if !nav then return end
     local navdir = nav:computeDirection(owner():getPos())
-    local dir = function()
-        if navdir == NAV_DIR.EAST then
-            return Vector(0, 10, 0)
-        elseif navdir == NAV_DIR.WEST then
-            return Vector(0, -10, 0)
-        elseif navdir == NAV_DIR.SOUTH then
-            return Vector(10, 0, 0)
-        elseif navdir == NAV_DIR.NORTH then
-            return Vector(-10, 0, 0)
-        end
-    end
-    global_dir = global_dir + dir()
-    global_dir = Vector(
-        math.clamp(global_dir.x, -10, 10),
-        math.clamp(global_dir.y, -10, 10),
-        math.clamp(global_dir.z, -10, 10)
-    )
     vehicle:setPos(vehicle:getPos() + global_dir)
 end)
 

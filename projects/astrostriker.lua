@@ -12,10 +12,22 @@ require("guns")
 
 do
     ---Initial health. Can be edited
-    INITIAL_HEALTH = 3000
+    INITIAL_HEALTH = 3800
 
-    ---Initial weak damage with chance 45%. Can be edited
-    INITIAL_WEAK_DAMAGE = 500
+    ---Sword damage with chance 45%. Can be edited
+    SWORD_DAMAGE = 400
+
+    ---Dash damage
+    DASH_DAMAGE = 60
+
+    ---Damage, required to crits
+    REQUIRED_CRITS_DAMAGE = 800
+
+    ---Crits damage decrease per second
+    CRITS_DAMAGE_DECREASE = 75
+
+    ---Crits count on activate
+    CRITS_MAX_COUNT = 4
 end
 
 
@@ -36,6 +48,22 @@ if SERVER then
         Blasters = 2,
         Block = 3
     }
+
+    -- Crits stuff
+    --- Crits charge in damage
+    local CRITS_CHARGE = 0
+    local CRITS_COUNT = 0
+
+    timer.create("CritsDecrease", 1, 0, function()
+        if CRITS_COUNT == 0 and CRITS_CHARGE ~= REQUIRED_CRITS_DAMAGE then
+            CRITS_CHARGE = math.clamp(
+                CRITS_CHARGE - CRITS_DAMAGE_DECREASE,
+                0,
+                REQUIRED_CRITS_DAMAGE
+            )
+        end
+    end)
+
 
     ---@type Vehicle
     local seat = prop.createSeat(chip():getPos() + Vector(0, 0, 20), Angle(), "models/nova/airboat_seat.mdl")
@@ -59,6 +87,19 @@ if SERVER then
     body.leftarm[2]:setLocalAngles(Angle(-100, 0, 0))
     body.rightarm[1]:setLocalAngles(Angle(40, -120, -120))
     body.rightarm[2]:setLocalAngles(Angle(-100, 0, 0))
+
+    -- All holograms to invisible (TODO: kick this out of code)
+    local all_holos = {}
+    table.add(all_holos, table.getKeys(body.base[1]:getChildren()))
+    table.add(all_holos, table.getKeys(body.base[2]:getChildren()))
+    table.add(all_holos, table.getKeys(body.head[1]:getChildren()))
+    table.add(all_holos, table.getKeys(body.leftarm[1]:getChildren()))
+    table.add(all_holos, table.getKeys(body.leftarm[2]:getChildren()))
+    table.add(all_holos, table.getKeys(body.rightarm[1]:getChildren()))
+    table.add(all_holos, table.getKeys(body.rightarm[2]:getChildren()))
+    for _, v in ipairs(all_holos) do
+        v:setNoDraw(true)
+    end
 
     -- Idle animation
     local base_pos
@@ -88,7 +129,6 @@ if SERVER then
     })
 
 
-    
     -- Function to attack
     local function attackDamage(attacked)
         local armPos = body.rightarm[2]:getPos()
@@ -106,10 +146,10 @@ if SERVER then
         local attacked = {}
         local tween = Tween:new()
         tween:add(
-            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeOutCubic),
-            Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, -80, -90), math.easeOutCubic),
-            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic),
-            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, -1, 1), math.easeOutCubic)
+            Param:new(0.6, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeOutCubic),
+            Param:new(0.6, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, -80, -90), math.easeOutCubic),
+            Param:new(0.6, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic),
+            Param:new(0.6, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, -1, 1), math.easeOutCubic)
         )
         tween:add(
             Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutCubic),
@@ -137,10 +177,10 @@ if SERVER then
         local tween = Tween:new()
         local attacked = {}
         tween:add(
-            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeOutCubic),
-            Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-60, -80, -90), math.easeOutCubic),
-            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic),
-            Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(-2, -1, 1), math.easeOutCubic)
+            Param:new(0.6, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeOutCubic),
+            Param:new(0.6, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-60, -80, -90), math.easeOutCubic),
+            Param:new(0.6, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeOutCubic),
+            Param:new(0.6, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(-2, -1, 1), math.easeOutCubic)
         )
         tween:add(
             Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutCubic),
@@ -162,42 +202,60 @@ if SERVER then
     end
 
 
-    local BLASTERS_CONTROL = false
-    local BLASTERS_ANIMATION
+    ---@class Blasters
+    ---@field control boolean
+    ---@field ammo number
+    ---@field ignore table
+    ---@field shootThread function
+    ---@field reloadThread function
+    ---@field animation Tween?
+    local Blasters = {}
+    Blasters.__index = Blasters
 
-    local function getBlastersAngle()
+    function Blasters:new()
+        local bl = setmetatable({
+            control = false,
+            animation = nil,
+            ignore = {},
+            shootThread = nil,
+            reloadThread = nil,
+            ammo = 6
+        }, Blasters)
+        bl.shootThread = coroutine.wrap(bl.shoot)
+        bl.reloadThread = coroutine.wrap(bl.reload)
+        return bl
+    end
+
+    function Blasters:getBlastersAngle()
         local res = astro:eyeTrace()
         if !res then return end
         return body.base[1]:worldToLocalAngles((res.HitPos - body.leftarm[1]:getPos()):getAngle())
     end
 
-
-    -- Blasters animation
-    local function blastersOn()
-        if BLASTERS_ANIMATION then BLASTERS_ANIMATION:remove() end
+    function Blasters:on()
+        if self.ammo == 0 then return end
+        if self.animation then self.animation:remove() end
         astro:setState(STATES.Blasters)
-        BLASTERS_ANIMATION = Tween:new()
-        BLASTERS_ANIMATION:add(
+        self.animation = Tween:new()
+        self.animation:add(
             Param:new(0.5, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -30, -10), math.easeInOutCirc),
             Fraction:new(1.5, math.easeInSine, nil, function(_, f)
                 body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 400 * f))
             end),
-            Param:new(0.2, body.leftarm[1], PROPERTY.LOCALANGLES, getBlastersAngle, math.easeInOutCubic, function()
-                BLASTERS_CONTROL = true
+            Param:new(0.2, body.leftarm[1], PROPERTY.LOCALANGLES, self.getBlastersAngle, math.easeInOutCubic, function()
+                self.control = true
             end),
             Param:new(0.5, body.leftarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCubic),
             Param:new(0.5, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 0, 2), math.easeInOutCirc)
         )
-        BLASTERS_ANIMATION:start()
+        self.animation:start()
     end
 
-
-    local function blastersOff()
-        if BLASTERS_ANIMATION then BLASTERS_ANIMATION:remove() end
-        BLASTERS_CONTROL = false
-        BLASTERS_ANIMATION = Tween:new()
-        BLASTERS_ANIMATION:sleep(0.3)
-        BLASTERS_ANIMATION:add(
+    function Blasters:off()
+        if self.animation then self.animation:remove() end
+        self.control = false
+        self.animation = Tween:new()
+        self.animation:add(
             Param:new(0.5, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCirc),
             Fraction:new(1.5, math.easeInSine, nil, function(_, f)
                 body.leftarm[2]:setLocalAngularVelocity(Angle(0, 0, 400 * (1 - f)))
@@ -208,32 +266,56 @@ if SERVER then
             Param:new(0.2, body.leftarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeOutCubic),
             Param:new(0.5, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(), math.easeInOutCirc)
         )
-        BLASTERS_ANIMATION:start()
+        self.animation:start()
+    end
+
+    function Blasters:shoot()
+        while true do
+            coroutine.yield()
+            coroutine.wait(0.3)
+            BlasterProjectile:new(self.ignore, body.leftarm[2]:getPos(), body.leftarm[2]:getAngles(), 2)
+            self.ammo = self.ammo - 1
+            if self.ammo == 0 then
+                self:off()
+            end
+        end
+    end
+
+    function Blasters:reload()
+        while true do
+            coroutine.yield()
+            if self.ammo == 6 then continue end
+            coroutine.wait(1)
+            self.ammo = self.ammo + 1
+            print(self.ammo)
+        end
+    end
+
+    function Blasters:think()
+        if !self.control then
+            self:reloadThread()
+            return
+        end
+        local res = astro:eyeTrace()
+        if !res then return end
+        body.leftarm[1]:setAngles(
+            math.lerpAngle(
+                0.5,
+                body.leftarm[1]:getAngles(),
+                (res.HitPos - body.leftarm[1]:getPos()):getAngle()
+            )
+        )
+        self:shootThread()
     end
 
 
+    local blasters = Blasters:new()
+
+
     -- Movement think --
-    hook.add("AstroThink", "Laser", function(as, _)
+    hook.add("AstroThink", "Blasters", function(as, _)
         if as ~= astro then return end
-        if astro:getState() == STATES.Blasters and BLASTERS_CONTROL then
-            local res = astro:eyeTrace()
-            if !res then return end
-            if game.getTickCount() % 5 == 0 then
-                BlasterProjectile:new({},
-                    body.leftarm[2]:getPos() + body.leftarm[2]:getUp() * 16 + body.leftarm[2]:getForward() * 50,
-                    body.leftarm[2]:getAngles(),
-                    2,
-                    10000
-                )
-            end
-            body.leftarm[1]:setAngles(
-                math.lerpAngle(
-                    0.5,
-                    body.leftarm[1]:getAngles(),
-                    (res.HitPos - body.leftarm[1]:getPos()):getAngle()
-                )
-            )
-        end
+        blasters:think()
     end)
 
 
@@ -264,7 +346,10 @@ if SERVER then
     hook.add("AstroDamage", "BlockStuff", function(as, amount)
         if as ~= astro then return end
         if astro:getState() == STATES.Block then
-            return amount * -0.1
+            CRITS_CHARGE = math.clamp(CRITS_CHARGE + amount, 0, REQUIRED_CRITS_DAMAGE)
+            net.start("UpdateCrits")
+            net.writeInt(CRITS_CHARGE, 16)
+            return amount * 0.25
         end
     end)
 
@@ -294,6 +379,17 @@ if SERVER then
                 function(_, f)
                     local velo = direction * 70000
                     astro.velocity = (velo * (1 - f)) + direction * 400
+                    local pos = astro.body:getPos()
+                    local damage = find.inCone(
+                        pos, direction, 200, 0.7,
+                        function(ent) return isValid(ent) and ent:getHealth() > 0 and !table.hasValue(astro.filter, ent) end
+                    )
+                    for _, ent in ipairs(damage) do
+                        local permited, _ = hasPermission("entities.applyDamage", ent)
+                        if permited then
+                            ent:applyDamage(60)
+                        end
+                    end
                 end
             )
         )
@@ -321,7 +417,7 @@ if SERVER then
             end
 
         -- Blasters: LMB
-        elseif key == MOUSE.MOUSE1 then blastersOn()
+        elseif key == MOUSE.MOUSE1 then blasters:on()
 
         -- Block: Mouse Wheel
         elseif key == MOUSE.MOUSE3 then armBlock()
@@ -332,9 +428,9 @@ if SERVER then
 
     hook.add("InputReleased", "", function(ply, key)
         if ply ~= astro.driver then return end
-        
+
         -- Blasters
-        if key == MOUSE.MOUSE1 and astro:getState() == STATES.Blasters then blastersOff()
+        if key == MOUSE.MOUSE1 and astro:getState() == STATES.Blasters then blasters:off()
 
         -- Block
         elseif key == MOUSE.MOUSE3 and astro:getState() == STATES.Block then armUnblock() end
