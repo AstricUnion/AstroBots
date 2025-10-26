@@ -64,20 +64,21 @@ if SERVER then
 
 
     -- Preload sounds
+    local sounds = "https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/sounds/astroscout/"
     hook.add("ClientInitialized", "Sounds", function(ply)
         astrosounds.preload(
             ply,
-            Sound:new("loop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/n9tzb3v1vs6x1fayy9cig/saberamb.mp3?rlkey=usn1ur6e34g8aiuhbjie7wn0a&st=g37ivi7q&dl=1"),
-            Sound:new("laserStart", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/17opqov0vv6wk45efu19j/LaserStart.mp3?rlkey=vqn27h91nyk01i6ua0g8edups&st=00l7louv&dl=1"),
-            Sound:new("laserEnd", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/hpmlc9crbevep0x8aey2c/LaserEnd.mp3?rlkey=sf3yj1cymexqmq5etj6sw85ny&st=xkp019ib&dl=1"),
-            Sound:new("laserLoop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/euklzknybzlru8wm333o3/LaserCharge-Loop.mp3?rlkey=871s42g8em56reah137q3osaj&st=ghyw8tqa&dl=1"),
-            Sound:new("laserShoot", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/iduvkgjwg3cx9qb5kufuw/LaserShoot.mp3?rlkey=z5n1lk07izc6tcuiu8z5gwxvk&st=ktpvv7yx&dl=1"),
-            Sound:new("punchClaws", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/3f7oso26jt98njb8rlwtc/Swing.mp3?rlkey=o7z0mgtp5p0hvlhfanwnlr1u5&st=9hmmjpds&dl=1"),
-            Sound:new("punch", 3, false, "https://www.dl.dropboxusercontent.com/scl/fi/d2995xr0baq1i2zvyk0bn/Punch1.mp3?rlkey=ivlnj2yk9evy6p1o0bfeayz0j&st=o2xj8x1q&dl=1"),
+            Sound:new("loop", 1, true, sounds .. "Idle.mp3"),
+            Sound:new("laserStart", 1, false, sounds .. "LaserStart.mp3"),
+            Sound:new("laserEnd", 1, false, sounds .. "LaserEnd.mp3"),
+            Sound:new("laserLoop", 1, true, sounds .. "LaserLoop.mp3"),
+            Sound:new("laserShoot", 1, true, sounds .. "LaserShoot.mp3"),
+            Sound:new("punchClaws", 1, false, sounds .. "Claws.mp3"),
+            Sound:new("punch", 3, false, sounds .. "Punch.mp3"),
             Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/frw4d1nvdpfqznyucis9r/Ram2.mp3?rlkey=drkc4dj16smf96htpy1yvz9z5&st=bk2xqso6&dl=1"),
-            Sound:new("berserkOn", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/ia1vvaup9prouzgobyerq/Adrenaline.mp3?rlkey=6wc1w1u8hfckilokdgmv0o2nj&st=ghw7srrn&dl=1"),
-            Sound:new("berserkOff", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/q8iqb5l85g21sivuu8hhg/AdrenalineStop.mp3?rlkey=4ienb5o38ix1osyp4zuqi6uw0&st=2q9zm4sq&dl=1"),
-            Sound:new("berserkLoop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/u61ky5sum5em1z0h9q98s/Energy4.wav?rlkey=pyg5cfqx3y10hhuqjxrrb14hh&st=b1v8aa6z&dl=1")
+            Sound:new("berserkOn", 1, false, sounds .. "BerserkOn.mp3"),
+            Sound:new("berserkOff", 1, false, sounds .. "BerserkOff.mp3"),
+            Sound:new("berserkLoop", 1, true, sounds .. "BerserkLoop.mp3")
         )
     end)
 

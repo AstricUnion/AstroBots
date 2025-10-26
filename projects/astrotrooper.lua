@@ -45,15 +45,17 @@ if SERVER then
 
 
     -- Preload sounds
+    local sounds = "https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/sounds/astrotrooper/"
     hook.add("ClientInitialized", "Sounds", function(ply)
         astrosounds.preload(
             ply,
-            Sound:new("loop", 1, true, "https://www.dl.dropboxusercontent.com/scl/fi/u61ky5sum5em1z0h9q98s/Energy4.wav?rlkey=pyg5cfqx3y10hhuqjxrrb14hh&st=b1v8aa6z&dl=1"),
-            Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
-            Sound:new("reloadLeft", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
-            Sound:new("reloadRight", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/i3us2xj0q47tccze51ymm/ramattack.mp3?rlkey=xy5xulfzaq7nf8fzzvo21z29f&st=g83wealc&dl=1"),
-            Sound:new("blasterLeft", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/fpgejktwdlxjz9nyj7sj4/Blast1.mp3?rlkey=c7h1wy6qu3iy1xa67dan8zte5&st=ru9p1w1b&dl=1"),
-            Sound:new("blasterRight", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/6q9lpjvt1sru65geweh4q/Blast2.mp3?rlkey=ui22nfydim0bur570at8mdwxg&st=1oj88xy4&dl=1")
+            Sound:new("loop", 1, true, sounds .. "Idle.mp3"),
+            Sound:new("dash", 1, false, sounds .. "Dash.mp3"),
+            Sound:new("predash", 1, false, sounds .. "Prepdash.mp3"),
+            Sound:new("reloadLeft", 1, false, sounds .. "Reload.mp3"),
+            Sound:new("reloadRight", 1, false, sounds .. "Reload.mp3"),
+            Sound:new("blasterLeft", 1, false, sounds .. "Fire.mp3"),
+            Sound:new("blasterRight", 1, false, sounds .. "Fire.mp3")
         )
     end)
 
@@ -217,8 +219,8 @@ if SERVER then
         can_dash = false
         astro:setState(STATES.Dash)
         local direction
-        astrosounds.play("dash", Vector(), astro.body)
         local dashTween = Tween:new()
+        astrosounds.play("predash", Vector(), astro.body)
         dashTween:add(
             Param:new(0.8, blaster.left:isAlive() and blaster.left.hitbox, PROPERTY.LOCALANGLES, Angle(-180, 0, 0), math.easeInOutSine, function()
                 createDashEffectHolo(blaster.left.hitbox:getPos(), blaster.right.hitbox)
@@ -227,6 +229,7 @@ if SERVER then
                 direction = astro:getDirection()
                 direction = !direction or direction:isZero() and astro.body:getForward() or direction
                 createDashEffectHolo(blaster.right.hitbox:getPos(), blaster.right.hitbox)
+                astrosounds.play("dash", Vector(), astro.body)
             end)
         )
         dashTween:add(
