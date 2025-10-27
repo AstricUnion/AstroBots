@@ -75,7 +75,7 @@ if SERVER then
             Sound:new("laserShoot", 1, true, sounds .. "LaserShoot.mp3"),
             Sound:new("punchClaws", 1, false, sounds .. "Claws.mp3"),
             Sound:new("punch", 3, false, sounds .. "Punch.mp3"),
-            Sound:new("dash", 1, false, "https://www.dl.dropboxusercontent.com/scl/fi/frw4d1nvdpfqznyucis9r/Ram2.mp3?rlkey=drkc4dj16smf96htpy1yvz9z5&st=bk2xqso6&dl=1"),
+            Sound:new("dash", 1, false, sounds .. "Dash.mp3"),
             Sound:new("berserkOn", 1, false, sounds .. "BerserkOn.mp3"),
             Sound:new("berserkOff", 1, false, sounds .. "BerserkOff.mp3"),
             Sound:new("berserkLoop", 1, true, sounds .. "BerserkLoop.mp3")
