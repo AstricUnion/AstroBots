@@ -65,7 +65,10 @@ body = {
         Holo(Rig(Vector(0,0,68))),
         Holo(SubHolo(Vector(0,0,68),Angle(0),"models/hunter/misc/sphere075x075.mdl",Vector(1.4,1.4,1.4),true,Color(0,0,0),"models/debug/debugwhite")),
         Holo(SubHolo(Vector(14,0,68),Angle(0),"models/hunter/misc/sphere075x075.mdl",Vector(0.6,1.1,1.1),true,Color(255,40,40),"models/debug/debugwhite")),
-        Holo(SubHolo(Vector(24.2,0,67),Angle(-90,0,0),"models/hunter/triangles/025x025mirrored.mdl",Vector(1.4,0.9,1.3),true,Color(255,255,255),"models/debug/debugwhite")),
+        Holo(SubHolo(Vector(20.2,0,67),Angle(0,0,0),"models/hunter/misc/sphere075x075.mdl",Vector(0.3,0.3,0.9),true,Color(255,255,255),"models/debug/debugwhite")),
+        
+        --Holo(SubHolo(Vector(24.2,0,67),Angle(-90,0,0),"models/hunter/triangles/025x025mirrored.mdl",Vector(1.4,0.9,1.3),true,Color(255,255,255),"models/debug/debugwhite")),
+        
         Holo(SubHolo(Vector(-22,0,70),Angle(-100,180,0),"models/props_combine/combine_booth_short01a.mdl",Vector(0.4,0.45,0.5),false,Color(255,40,40))),
         Holo(SubHolo(Vector(-4,0,64),Angle(45,180,0),"models/props_combine/combine_booth_short01a.mdl",Vector(0.3,0.45,0.4),false,Color(255,40,40))),
         Holo(SubHolo(Vector(0,-35,52),Angle(20,-12,0),"models/props_combine/headcrabcannister01a.mdl",Vector(0.4,0.5,0.5),false,Color(255,40,40))),
@@ -87,7 +90,45 @@ body = {
             Holo(SubHolo(Vector(-3,-200,9),Angle(0,90,0),"models/props_combine/CombineTrain01a.mdl",Vector(0.16,0.26,0.10),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,-220,24),Angle(-90,90,0),"models/props_combine/combineinnerwallcluster1024_003a.mdl",Vector(0.06,0.04,0.08),false,Color(255,40,40))),
             Holo(SubHolo(Vector(-3,-200,40),Angle(-105,-90,180),"models/props_combine/tprotato2.mdl",Vector(0.8,0.8,0.8),false,Color(255,40,40))),
-            Holo(SubHolo(Vector(-3,-190,24),Angle(270,90,0),"models/props_combine/combine_mortar01b.mdl",Vector(1.2),false,Color(255,40,40)))
+            Holo(SubHolo(Vector(-3,-190,24),Angle(270,90,0),"models/props_combine/combine_mortar01b.mdl",Vector(1.2),false,Color(255,40,40))),
+            
+            
+            
+            
+            
+            
+            
+            --Максабур, отдели пж от основной руки!
+                        
+            Holo(SubHolo(Vector(-2,-230,48),Angle(-90,90,0),"models/props_combine/combineinnerwall001a.mdl",Vector(0.06,0.1,0.09),false,Color(255,40,40,255),"")),
+            Holo(SubHolo(Vector(-8,-230,48),Angle(-90,90,0),"models/props_combine/combineinnerwall001a.mdl",Vector(0.06,0.1,0.09),false,Color(255,40,40,255),"")),    
+            Holo(SubHolo(Vector(-9.1,-255,53),Angle(-90,90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.04,0.005,0.125),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(-9.1,-298.1,56),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(-9.1,-278.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(-9.1,-258.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(-9.1,-238.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(-9.1,-218.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(-9.1,-255,53),Angle(-90,90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.04,0.005,0.125),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(-9.1,-298.1,56),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(-9.1,-278.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(-9.1,-258.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(-9.1,-238.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(-9.1,-218.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(2,-230,48),Angle(-90,90,0),"models/props_combine/combineinnerwall001a.mdl",Vector(0.06,0.17,0.09),false,Color(255,40,40,255),"")),
+            Holo(SubHolo(Vector(4,-255,53),Angle(-90,90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.04,0.005,0.125),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(4,-298.1,56),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(4,-278.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(4,-258.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(4,-238.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(4,-218.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,40,40,255),"models/debug/debugwhite")),
+            Holo(SubHolo(Vector(4,-255,53),Angle(-90,90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.04,0.005,0.125),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(4,-298.1,56),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(4,-278.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(4,-258.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(4,-238.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe")),
+            Holo(SubHolo(Vector(4,-218.1,56.2),Angle(-55,-90,0),"models/props_combine/combineinnerwallcluster1024_001a.mdl",Vector(0.03,0.005,0.025),true,Color(255,255,255,255),"models/wireframe"))
+            
+            
         ),
         hologram.createPart(
             Holo(Rig(Vector(-3,-253,24),Angle(0,-90,0))),
@@ -101,7 +142,14 @@ body = {
             Holo(SubHolo(Vector(11,-295,4),Angle(80,90,0),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,1.6),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
             Holo(SubHolo(Vector(30,-270,24),Angle(0,20,-70),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,2),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001")),
             Holo(SubHolo(Vector(30,-295,18),Angle(0,-25,-90),"models/props_combine/breenlight.mdl",Vector(2.8,2.8,1.5),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
-        )
+            
+            
+            
+            
+            
+            
+            
+        )    
     },
     leftarm = {
         hologram.createPart(
