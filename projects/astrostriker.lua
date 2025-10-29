@@ -46,7 +46,8 @@ if SERVER then
         Idle = 0,
         Attack = 1,
         Blasters = 2,
-        Block = 3
+        Block = 3,
+        Invisible = 4
     }
 
     -- Crits stuff
@@ -97,8 +98,11 @@ if SERVER then
     table.add(all_holos, table.getKeys(body.leftarm[2]:getChildren()))
     table.add(all_holos, table.getKeys(body.rightarm[1]:getChildren()))
     table.add(all_holos, table.getKeys(body.rightarm[2]:getChildren()))
-    for _, v in ipairs(all_holos) do
-        v:setNoDraw(true)
+
+    local function invisible(state)
+        for _, v in ipairs(all_holos) do
+            v:setNoDraw(state)
+        end
     end
 
     -- Idle animation
@@ -403,9 +407,25 @@ if SERVER then
     end
 
 
+    local function invisibleToggle()
+        local isInvisible = astro:getState() == STATES.Invisible
+        if isInvisible then
+            astro:setState(STATES.Idle)
+            astro.body:setCollisionGroup(COLLISION_GROUP.NONE)
+            invisible(false)
+        else
+            astro:setState(STATES.Invisible)
+            astro.body:setCollisionGroup(COLLISION_GROUP.IN_VEHICLE)
+            invisible(true)
+        end
+    end
+
 
     hook.add("InputPressed", "", function(ply, key)
         if ply ~= astro.driver then return end
+
+        if key == KEY.F then invisibleToggle() end
+
         if astro:getState() ~= STATES.Idle then return end
 
         -- Main attack: RMB
