@@ -170,8 +170,8 @@ if SERVER then
     body.leftarm.laser[1]:setLocalAngles(Angle(-100, 0, 0))
 
     body.rightarm[1]:setLocalAngles(Angle(40, -120, -120))
-    body.rightarm[2]:setLocalAngles(Angle(-100, 0, 0))
-    body.rightarm[3]:setLocalAngles(Angle(0, 10, 90))
+    body.rightarm[2]:setLocalAngles(Angle(-100, 90, 0))
+    body.rightarm[3]:setLocalAngles(Angle(0, 0, 0))
 
     astro.body:setPos(CHIPPOS + Vector(0, 0, 50))
     astro.body:setFrozen(false)
@@ -261,8 +261,8 @@ if SERVER then
         tween:add(
             Param:new(0.2, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutCubic),
             Param:new(0.2, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutSine),
-            Param:new(0.2, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutSine),
-            Param:new(0.2, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 10, 90), math.easeInOutSine, function() astro:setState(STATES.Idle) end),
+            Param:new(0.2, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 90, 0), math.easeInOutSine),
+            Param:new(0.2, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 0, 0), math.easeInOutSine, function() astro:setState(STATES.Idle) end),
             Param:new(0.2, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(), math.easeInOutQuint)
         )
 
@@ -329,7 +329,7 @@ if SERVER then
         tween:add(
             Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutQuint),
             Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutQuint),
-            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutCubic, function()
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 90, 0), math.easeInOutCubic, function()
                 if callback then callback() end
                 astro:setState(STATES.Idle)
             end),
