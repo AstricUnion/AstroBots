@@ -253,8 +253,8 @@ if SERVER then
             Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, -60, -90), math.easeOutCubic, nil, function()
                 attacked = punchDamage(attacked)
             end),
-            Param:new(0.1, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(0, 0, 0), math.easeOutCubic),
-            Param:new(0.1, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 10, 90), math.easeOutCubic),
+            Param:new(0.1, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(0, 0, 90), math.easeOutCubic),
+            Param:new(0.1, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 10, 0), math.easeOutCubic),
             Param:new(0.1, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(0, 2, -2), math.easeOutQuint)
         )
         tween:sleep(0.05)
@@ -319,7 +319,7 @@ if SERVER then
         tween:add(
             Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutQuint),
             Param:new(0.2, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(1, 1, -1), math.easeOutBack),
-            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(20, 20, 0), math.easeOutQuint, nil, function()
+            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(20, 20, 90), math.easeOutQuint, nil, function()
                 clawsAttackDamage(damage, attacked)
             end)
         )
