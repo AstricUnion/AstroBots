@@ -1,0 +1,20 @@
+--@name astro_sniper_mortire_zone
+--@author AstriUunion
+--@shared
+
+--@include astricunion/libs/holos.txt
+
+if SERVER then
+    require("astricunion/libs/holos.txt")
+    starfall_holo = {
+        base = {
+            hologram.createPart(
+                Holo(SubHolo(Vector(0,0,0), Angle(0,0,90), "models/holograms/hq_sphere.mdl", Vector(-250,-250,-250), true, Color(255,40,40,120))),
+                Holo(SubHolo(Vector(0,0,0), Angle(0,0,0), "models/holograms/hq_sphere.mdl", Vector(-50,-50,-50), true, Color(255,255,255,120)))
+            )
+        },
+        
+    }
+else
+    --   ( )
+end
