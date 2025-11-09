@@ -9,8 +9,8 @@ if SERVER then
     starfall_holo = {
         base = {
             hologram.createPart(
-                Holo(SubHolo(Vector(0,0,0), Angle(0,0,90), "models/holograms/hq_rcylinder.mdl", Vector(-1.25,-1.25,-6.5), true, Color(255,40,40))),
-                Holo(SubHolo(Vector(0,0,0), Angle(0,0,90), "models/holograms/hq_rcylinder.mdl", Vector(0.75,0.75,5.85), true, Color(255,255,255)))
+                Holo(SubHolo(Vector(0,0,0), Angle(90,0,0), "models/holograms/hq_rcylinder.mdl", Vector(-1.25,-1.25,-6.5), true, Color(255,40,40))),
+                Holo(SubHolo(Vector(0,0,0), Angle(90,0,0), "models/holograms/hq_rcylinder.mdl", Vector(0.75,0.75,5.85), true, Color(255,255,255)))
             )
         },
         
