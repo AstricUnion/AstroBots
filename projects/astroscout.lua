@@ -151,6 +151,7 @@ if SERVER then
     body.rightarm[1]:setParent(body.base[1])
     body.rightarm[2]:setParent(body.rightarm[1])
     body.rightarm[3]:setParent(body.rightarm[2])
+    body.rightarm[4]:setParent(body.rightarm[2])
 
     arms.leftarm[1]:setParent(body.leftarm[1])
     arms.leftarm[2]:setParent(body.leftarm.laser[1])
@@ -172,6 +173,7 @@ if SERVER then
     body.rightarm[1]:setLocalAngles(Angle(40, -120, -120))
     body.rightarm[2]:setLocalAngles(Angle(-100, 90, 0))
     body.rightarm[3]:setLocalAngles(Angle(0, 0, 0))
+    body.rightarm[4]:setLocalPos(Vector(-20, 0, 0))
 
     astro.body:setPos(CHIPPOS + Vector(0, 0, 50))
     astro.body:setFrozen(false)
@@ -288,9 +290,10 @@ if SERVER then
 
     local function clawsAttackSwing(tween, callback)
         tween:add(
-            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -80, 0), math.easeInOutBack),
-            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-50, -80, 0), math.easeInOutQuint),
-            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(), math.easeInOutQuint, callback),
+            Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -50, 0), math.easeInOutBack),
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-20, -50, -50), math.easeInOutQuint),
+            Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-50, -20, 90), math.easeInOutQuint, callback),
+            Param:new(0.3, body.rightarm[4], PROPERTY.LOCALPOS, Vector(20, 0, 0), math.easeInOutQuint, callback),
             Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(-2, -2, 2), math.easeInBack, function()
                 local pos = body.rightarm[3]:getPos()
                 local forward = body.rightarm[3]:getForward() * 50
@@ -319,7 +322,7 @@ if SERVER then
         tween:add(
             Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutQuint),
             Param:new(0.2, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(1, 1, -1), math.easeOutBack),
-            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(20, 20, 90), math.easeOutQuint, nil, function()
+            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(50, 50, 50), math.easeOutQuint, nil, function()
                 clawsAttackDamage(damage, attacked)
             end)
         )
@@ -329,6 +332,7 @@ if SERVER then
         tween:add(
             Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(), math.easeInOutQuint),
             Param:new(0.4, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutQuint),
+            Param:new(0.8, body.rightarm[4], PROPERTY.LOCALPOS, Vector(-20, 0, 0), math.easeInOutQuint, callback),
             Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 90, 0), math.easeInOutCubic, function()
                 if callback then callback() end
                 astro:setState(STATES.Idle)
@@ -417,8 +421,9 @@ if SERVER then
             Param:new(0.35, body.leftarm[1], PROPERTY.LOCALANGLES, Angle(0, -20, 60), math.easeInOutQuint),
             Param:new(0.35, body.leftarm.laser[1], PROPERTY.LOCALANGLES, Angle(-80, 0, 0), math.easeInOutQuint),
             Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(0, 20, -60), math.easeInOutQuint),
-            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-40, 0, 0), math.easeInOutQuint),
-            Param:new(0.35, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(-20, 0, 180), math.easeInOutQuint)
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-40, 0, -180), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 0, 0), math.easeInOutQuint),
+            Param:new(0.8, body.rightarm[4], PROPERTY.LOCALPOS, Vector(20, 0, 0), math.easeInOutQuint)
         )
         BLOCK_ANIMATION:start()
     end
@@ -430,8 +435,10 @@ if SERVER then
             Param:new(0.35, body.leftarm[1], PROPERTY.LOCALANGLES, Angle(40, 120, 120), math.easeInOutQuint),
             Param:new(0.35, body.leftarm.laser[1], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutQuint),
             Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, -120, -120), math.easeInOutQuint),
-            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 0), math.easeInOutQuint),
-            Param:new(0.35, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 10, 90), math.easeInOutQuint, function()
+            Param:new(0.35, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-100, 0, 90), math.easeInOutQuint),
+            Param:new(0.8, body.rightarm[4], PROPERTY.LOCALPOS, Vector(-20, 0, 0), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[3], PROPERTY.LOCALANGLES, Angle(0, 0, 0), math.easeInOutQuint, function()
+            
                 astro:setState(STATES.Idle)
             end)
         )
