@@ -291,7 +291,7 @@ if SERVER then
     local function clawsAttackSwing(tween, callback)
         tween:add(
             Param:new(0.4, body.base[1], PROPERTY.LOCALANGLES, Angle(0, -50, 0), math.easeInOutBack),
-            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-20, -50, -50), math.easeInOutQuint),
+            Param:new(0.35, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(-70, -50, -50), math.easeInOutQuint),
             Param:new(0.4, body.rightarm[2], PROPERTY.LOCALANGLES, Angle(-50, -20, 90), math.easeInOutQuint, callback),
             Param:new(0.3, body.rightarm[4], PROPERTY.LOCALPOS, Vector(20, 0, 0), math.easeInOutQuint, callback),
             Param:new(0.4, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(-2, -2, 2), math.easeInBack, function()
@@ -322,7 +322,7 @@ if SERVER then
         tween:add(
             Param:new(0.1, body.base[1], PROPERTY.LOCALANGLES, Angle(0, 60, -5), math.easeOutQuint),
             Param:new(0.2, astro.cameraPin, PROPERTY.LOCALANGLES, Angle(1, 1, -1), math.easeOutBack),
-            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(50, 50, 50), math.easeOutQuint, nil, function()
+            Param:new(0.1, body.rightarm[1], PROPERTY.LOCALANGLES, Angle(40, 50, 50), math.easeOutQuint, nil, function()
                 clawsAttackDamage(damage, attacked)
             end)
         )
