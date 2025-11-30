@@ -36,14 +36,14 @@ end
 body = {
     base = {
         hologram.createPart(
-            Holo(SubHolo(Vector(-70,0,-10),Angle(0,180,0),"models/props_combine/combine_barricade_med02c.mdl",Vector(0.5,0.5,0.35),false,Color(255,0,0,255),"")),
-            Holo(SubHolo(Vector(-55,-55,-10),Angle(0,-160,0),"models/props_combine/combine_barricade_tall03a.mdl",Vector(0.25,0.5,0.15),false,Color(255,0,0,255),"")),
-            Holo(SubHolo(Vector(-55,55,-10),Angle(0,160,0),"models/props_combine/combine_barricade_tall04a.mdl",Vector(0.25,0.5,0.15),false,Color(255,0,0,255),"")),
+            Holo(SubHolo(Vector(-60,0,-10),Angle(0,180,0),"models/combine_gate_citizen.mdl",Vector(0.5,0.5,0.35),false,Color(255,0,0,255),"")),
+            Holo(SubHolo(Vector(-50,-55,-15),Angle(0,-160,0),"models/props_combine/combine_barricade_tall03a.mdl",Vector(0.25,0.5,0.15),false,Color(255,0,0,255),"")),
+            Holo(SubHolo(Vector(-50,55,-15),Angle(0,160,0),"models/props_combine/combine_barricade_tall04a.mdl",Vector(0.25,0.5,0.15),false,Color(255,0,0,255),"")),
             Holo(SubHolo(Vector(59,0,-10),Angle(0,0,0),"models/combine_gate_citizen.mdl",Vector(0.4,0.4,0.3),false,Color(255,0,0,255),"")),
             Holo(SubHolo(Vector(50,50,-15),Angle(0,45,0),"models/props_combine/combine_barricade_tall01b.mdl",Vector(0.20,0.50,0.15),false,Color(255,0,0,255),"")),
             Holo(SubHolo(Vector(50,-50,-15),Angle(0,-45,0),"models/props_combine/combine_barricade_tall01b.mdl",Vector(0.20,0.50,0.15),false,Color(255,0,0,255),"")),
-            Holo(SubHolo(Vector(0,95,15),Angle(0,-90,180),"models/combine_dropship_container.mdl",Vector(0.4,0.40,0.50),false,Color(255,0,0,255),"")),
-            Holo(SubHolo(Vector(0,-95,15),Angle(0,90,180),"models/combine_dropship_container.mdl",Vector(0.4,0.40,0.50),false,Color(255,0,0,255),"")),
+            Holo(SubHolo(Vector(0,80,15),Angle(0,-90,180),"models/combine_dropship_container.mdl",Vector(0.3,0.40,0.50),false,Color(255,0,0,255),"")),
+            Holo(SubHolo(Vector(0,-80,15),Angle(0,90,180),"models/combine_dropship_container.mdl",Vector(0.3,0.40,0.50),false,Color(255,0,0,255),"")),
             Holo(SubHolo(Vector(25,0,-35),Angle(45,0,180),"models/props_combine/combineinnerwallcluster1024_003a.mdl",Vector(0.07,0.09,0.09),false,Color(255,40,40,255),"")),
             Holo(SubHolo(Vector(-25,0,-35),Angle(45,180,180),"models/props_combine/combineinnerwallcluster1024_003a.mdl",Vector(0.07,0.09,0.09),false,Color(255,40,40,255),""))
         ),
