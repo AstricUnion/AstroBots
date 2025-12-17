@@ -32,7 +32,8 @@ end
 
 
 if SERVER then
-    require("ftimers")
+    ---@class FTimer
+    local FTimer = require("ftimers")
     require("tweens")
     local hitbox = require("hitbox")
 

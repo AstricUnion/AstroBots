@@ -2,7 +2,11 @@
 
 --[[ Holos ]]--
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/holos.lua as holos
-require("holos")
+local holos = require("holos")
+---@class Holo
+local Holo = holos.Holo
+local Rig = holos.Rig
+local SubHolo = holos.SubHolo
 
 local function circlePos(ang, radius, pos)
     local rad = math.rad(ang)
@@ -10,12 +14,12 @@ local function circlePos(ang, radius, pos)
 end
 
 local function prong(ang)
-    local prong = hologram.createPart(
+    local prongHolo = hologram.createPart(
         Holo(Rig(Vector(-1.5,242,24))),
         Holo(SubHolo(Vector(-1.5,242,48),Angle(145,90,-90),"models/props_combine/combine_barricade_bracket01a.mdl",Vector(1.4,1,1),false,Color(255,40,40,255),"models/props_combine/metal_combinebridge001"))
     )
-    prong:setLocalAngles(Angle(-ang,0,0))
-    return Holo(prong)
+    prongHolo:setLocalAngles(Angle(-ang,0,0))
+    return Holo(prongHolo)
 end
 
 local function laserTube(ang)

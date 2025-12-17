@@ -2,9 +2,10 @@
 --@author астрикунион
 --@server
 
-
 local CHIP = chip()
 local CHIPPOS = CHIP:getPos()
+
+--[[
 
 ---@cast vehicle Hologram
 local vehicle = hologram.create(CHIPPOS, Angle(), "models/holograms/cube.mdl")
@@ -17,9 +18,9 @@ timer.create("lol", 0.01, 0, function()
     local navdir = nav:computeDirection(owner():getPos())
     vehicle:setPos(vehicle:getPos() + global_dir)
 end)
+]]
 
---[[
-GRIDSIZE = 1
+GRIDSIZE = 5
 GRIDSPACE = 256
 local grid = {}
 local function createGrid()
@@ -29,7 +30,7 @@ local function createGrid()
             for z=0, GRIDSIZE - 1 do
                 local pos = CHIPPOS + Vector(x, y, z) * GRIDSPACE
                 if !pos:isInWorld() then continue end
-                table.insert(grid, pos)
+                grid[#grid + 1] = pos
                 hologram.create(pos, Angle(), "models/holograms/cube.mdl")
             end
         end
@@ -42,5 +43,4 @@ hook.add("Think", "", function()
     if coroutine.status(thread) == "dead" then return end
     coroutine.resume(thread)
 end)
-]]
 

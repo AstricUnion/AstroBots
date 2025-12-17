@@ -56,7 +56,8 @@ end
 CHIPPOS = chip():getPos()
 if SERVER then
     -- Server libs --
-    require("ftimers")
+    ---@class FTimer
+    local FTimer = require("ftimers")
     require("tweens")
     require("astroholos")
     local hitbox = require("hitbox")

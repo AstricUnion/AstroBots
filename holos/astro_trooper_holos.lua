@@ -4,7 +4,10 @@
 
 --[[ Holos ]]--
 --@include https://raw.githubusercontent.com/AstricUnion/Libs/refs/heads/main/holos.lua as holos
-require("holos")
+local holos = require("holos")
+---@class Holo
+local Holo = holos.Holo
+local SubHolo = holos.SubHolo
 
 
 local function blaster(offset)
