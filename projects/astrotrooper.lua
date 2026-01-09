@@ -44,22 +44,6 @@ if SERVER then
     createLight("Main", body.base[1], Vector(0, 0, 20), 80, 10, Color(255, 0, 0))
     createLight("Underglow", body.base[1], Vector(0, 0, -10), 80, 10, Color(255, 0, 0))
 
-
-    -- Preload sounds
-    local sounds = "https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/sounds/astrotrooper/"
-    hook.add("ClientInitialized", "Sounds", function(ply)
-        astrosounds.preload(
-            ply,
-            Sound:new("loop", 1, true, sounds .. "Idle.mp3"),
-            Sound:new("dash", 1, false, sounds .. "Dash.mp3"),
-            Sound:new("predash", 1, false, sounds .. "Prepdash.mp3"),
-            Sound:new("reloadLeft", 1, false, sounds .. "Reload.mp3"),
-            Sound:new("reloadRight", 1, false, sounds .. "Reload.mp3"),
-            Sound:new("blasterLeft", 1, false, sounds .. "Fire.mp3"),
-            Sound:new("blasterRight", 1, false, sounds .. "Fire.mp3")
-        )
-    end)
-
     -- Create bot parts --
     local seat = prop.createSeat(CHIPPOS + Vector(0, 0, -6), Angle(), "models/nova/airboat_seat.mdl")
     local size = Vector(35, 35, 20)
@@ -343,6 +327,16 @@ else
     -- Client libs --
     require("ui")
     -----------------
+
+    -- Preload sounds
+    local sounds = "https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/sounds/astrotrooper/"
+    astrosounds.preload("loop", 1, true, true, sounds .. "Idle.mp3")
+    astrosounds.preload("dash", 1, false, false, sounds .. "Dash.mp3")
+    astrosounds.preload("predash", 1, false, false, sounds .. "Prepdash.mp3")
+    astrosounds.preload("reloadLeft", 1, false, false, sounds .. "Reload.mp3")
+    astrosounds.preload("reloadRight", 1, false, false, sounds .. "Reload.mp3")
+    astrosounds.preload("blasterLeft", 1, false, false, sounds .. "Fire.mp3")
+    astrosounds.preload("blasterRight", 1, false, false, sounds .. "Fire.mp3")
 
     local blasterLeftAmmo = 4
     local blasterRightAmmo = 4

@@ -63,26 +63,6 @@ if SERVER then
     local hitbox = require("hitbox")
     -----------------
 
-
-    -- Preload sounds
-    local sounds = "https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/sounds/astroscout/"
-    hook.add("ClientInitialized", "Sounds", function(ply)
-        astrosounds.preload(
-            ply,
-            Sound:new("loop", 1, true, sounds .. "Idle.mp3"),
-            Sound:new("laserStart", 1, false, sounds .. "LaserStart.mp3"),
-            Sound:new("laserEnd", 1, false, sounds .. "LaserEnd.mp3"),
-            Sound:new("laserLoop", 1, true, sounds .. "LaserLoop.mp3"),
-            Sound:new("laserShoot", 1, true, sounds .. "LaserShoot.mp3"),
-            Sound:new("punchClaws", 1, false, sounds .. "Claws.mp3"),
-            Sound:new("punch", 3, false, sounds .. "Punch.mp3"),
-            Sound:new("dash", 1, false, sounds .. "Dash.mp3"),
-            Sound:new("berserkOn", 1, false, sounds .. "BerserkOn.mp3"),
-            Sound:new("berserkOff", 1, false, sounds .. "BerserkOff.mp3"),
-            Sound:new("berserkLoop", 1, true, sounds .. "BerserkLoop.mp3")
-        )
-    end)
-
     -- States
     local STATES = {
         Idle = 0,
@@ -123,12 +103,6 @@ if SERVER then
         INITIAL_SPEED,
         INITIAL_SPRINT
     )
-
-    -- Start sound --
-    hook.add("SoundPreloaded", "StartSound", function(name, ply)
-        if name ~= "loop" then return end
-        astrosounds.play("loop", Vector(), astro.body, ply)
-    end)
 
     local arms = {
         leftarm = {
@@ -711,6 +685,21 @@ else
     -- Client libs --
     require("ui")
     -----------------
+    
+    -- Preload sounds --
+    local sounds = "https://raw.githubusercontent.com/AstricUnion/AstroBots/refs/heads/main/sounds/astroscout/"
+    astrosounds.preload("loop", 1, true, true, sounds .. "Idle.mp3")
+    astrosounds.preload("laserStart", 1, false, false, sounds .. "LaserStart.mp3")
+    astrosounds.preload("laserEnd", 1, false, false, sounds .. "LaserEnd.mp3")
+    astrosounds.preload("laserLoop", 1, true, false, sounds .. "LaserLoop.mp3")
+    astrosounds.preload("laserShoot", 1, true, false, sounds .. "LaserShoot.mp3")
+    astrosounds.preload("punchClaws", 1, false, false, sounds .. "Claws.mp3")
+    astrosounds.preload("punch", 3, false, false, sounds .. "Punch.mp3")
+    astrosounds.preload("dash", 1, false, false, sounds .. "Dash.mp3")
+    astrosounds.preload("berserkOn", 1, false, false, sounds .. "BerserkOn.mp3")
+    astrosounds.preload("berserkOff", 1, false, false, sounds .. "BerserkOff.mp3")
+    astrosounds.preload("berserkLoop", 1, true, false, sounds .. "BerserkLoop.mp3")
+    --------------------
 
     ---@type number
     local laserCharge = 1
