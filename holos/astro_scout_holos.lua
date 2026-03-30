@@ -6,7 +6,7 @@ local holos = require("holos")
 ---@class Holo
 local Holo = holos.Holo
 local Rig = holos.Rig
-local SubHolo = holos.SubHolo
+local SubHolo = holos.SubHoloq
 
 local function circlePos(ang, radius, pos)
     local rad = math.rad(ang)
