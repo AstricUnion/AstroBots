@@ -75,7 +75,7 @@ body = {
             Holo(SubHolo(Vector(200,-700,500),Angle(0,0,135),"models/xqm/jetwing2.mdl",Vector(35.45,15.25,80),false,Color(255,40,40),metal2))           
             ),
         hologram.createPart(
-            Holo(Rig    (Vector(500,0,0))),
+            Holo(Rig    (Vector(500,0,-70))),
             Holo(SubHolo(Vector(500.75,0,-70),Angle(90,0,0),"models/Items/combine_rifle_ammo01.mdl",Vector(55.45,55.55,80),false,Color(255,40,40))),
             Holo(SubHolo(Vector(500.75,0,-70),Angle(0,90,90),"models/Items/combine_rifle_ammo01.mdl",Vector(55.45,55.55,80),false,Color(255,40,40)))
         
