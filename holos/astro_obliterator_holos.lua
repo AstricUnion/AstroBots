@@ -83,7 +83,7 @@ body = {
     },
     
     
-    hear = {
+    head = {
         hologram.createPart(
         Holo(Rig    (Vector(200,0,550))),
         Holo(SubHolo(Vector(200,0,550),Angle(0,0,0),"models/starfall/holograms/sphere.mdl",Vector(550.0,550.0,550.0),true,Color(0,0,0))),
