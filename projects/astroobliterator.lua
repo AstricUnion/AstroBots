@@ -49,7 +49,7 @@ if SERVER then
     body.rightBlaster2:setParent(body.base[1])
     body.rightBlaster3:setParent(body.base[1])
     astro.head:setParent(body.base[1])
-    seat:setParent(body.hitbox)
+    seat:setParent(body.base[1])
 
 
 
