@@ -101,6 +101,31 @@ if SERVER then
     ghost_camera_prop:setNocollideAll(true)
     ghost_camera_prop:setFrozen(true)
 
+    -----------------
+    -- Holos visibility control
+    -----------------
+    local allHolos = {
+        body.base[1], body.base[2], body.head[1],
+        body.leftBlaster1, body.leftBlaster2, body.leftBlaster3,
+        body.rightBlaster1, body.rightBlaster2, body.rightBlaster3
+    }
+
+    local function setAllHolosVisible(visible)
+        for _, holo in ipairs(allHolos) do
+            if isValid(holo) then
+                holo:setNoDraw(not visible)
+                local children = holo:getChildren()
+                if children then
+                    for _, child in pairs(children) do
+                        if isValid(child) then
+                            child:setNoDraw(not visible)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     local _origThink = astro.think
     function astro:think()
         if WARP_STATE ~= 0 then return end
@@ -176,7 +201,7 @@ if SERVER then
         if name ~= "loop" then return end
         astrosounds.play("loop", Vector(), astro.body, ply)
     end)
-    
+
     hook.add("ClientInitialized", "SendEntities", function(ply)
         net.start("server-to-client")
         net.writeEntity(body_hitbox)
@@ -294,12 +319,6 @@ if SERVER then
             end
         end
     end)
-    local blasterOrder = {
-        "leftBlaster1", "rightBlaster1",
-        "leftBlaster2", "rightBlaster2", 
-        "leftBlaster3", "rightBlaster3"
-    }
-    local currentBlasterIndex = 1
     -----------------
     -- Blaster functions
     -----------------
@@ -381,12 +400,27 @@ if SERVER then
         return holo
     end
 
+    local function createWarpEffectHolo(pos, ang, parent)
+        local holo = hologram.create(pos, ang, "models/hunter/plates/plate.mdl")
+        if !holo then return end
+        holo:setParent(parent)
+        holo:setTrails(64, 0, 5, "trails/laser", Color(100, 200, 255))
+        holo:setColor(Color(100, 200, 255, 100))
+        timer.simple(3, function()
+            holo:setParent(nil)
+            timer.simple(2, function()
+                holo:remove()
+            end)
+        end)
+        return holo
+    end
+    
     local function dashCD()
         timer.simple(DASH_COOLDOWN, function()
             CAN_DASH = true
         end)
     end
-    
+
     local function dash()
         if !CAN_DASH then return end
         CAN_DASH = false
@@ -492,34 +526,60 @@ if SERVER then
             net.start("camswitch2")
             net.send(astro.driver)
             
-            -- Teleport body to ghost camera position
+            -- Teleport body to ghost camera position WITH OFFSET
             if isValid(body_hitbox) and isValid(ghost_camera_prop) then
-                body_hitbox:setPos(ghost_camera_prop:getPos())
+                local targetPos = ghost_camera_prop:getPos() - ghost_camera_prop:getForward() * 150
+                body_hitbox:setPos(targetPos)
                 body_hitbox:setAngles(ghost_camera_prop:getAngles())
                 body_hitbox:setVelocity(Vector())
             end
         end
         
+        -- Phase 1: Hide and pull back (0 - 0.7s)
         if WARP_STATE == 1 and WARP_TIMER < 0.7 then
             body.base[1]:setParent(nil)
-            body.base[1]:setPos(math.lerpVector(0.12, body.base[1]:getPos(), body_hitbox:localToWorld(Vector(20000,0,0))))
+            local frametime = game.getTickInterval()
+            local targetPos = body_hitbox:localToWorld(Vector(20000, 0, 0))
+            body.base[1]:setPos(math.lerpVector(frametime * 2, body.base[1]:getPos(), targetPos))
+            
+            -- Create warp trail effect
+            if WARP_TIMER < 0.1 and isValid(body.base[1]) then
+                createWarpEffectHolo(body.base[1]:getPos(), body.base[1]:getAngles(), body.base[1])
+            end
+            
+            setAllHolosVisible(false)
         end
         
+        -- Phase 2: Explode to infinity (0.7s - 100000s)
         if WARP_STATE == 1 and WARP_TIMER > 0.7 and WARP_TIMER < 100000 then
-            body.base[1]:setPos(math.lerpVector(0.3, body.base[1]:getPos(), Vector(50000,50000,50000)))
+            local frametime = game.getTickInterval()
+            body.base[1]:setPos(math.lerpVector(frametime * 0.5, body.base[1]:getPos(), Vector(50000, 50000, 50000)))
         end
         
+        -- Phase 3: Return to parent (100000s - 100000.1s)
         if WARP_STATE == 2 and WARP_TIMER > 100000 and WARP_TIMER < 100000.1 then
             body.base[1]:setParent(body_hitbox)
         end
         
+        -- Phase 4: Smooth return animation (100000.1s - 100001s)
         if WARP_STATE == 2 and WARP_TIMER > 100000.1 and WARP_TIMER < 100001 then
             seat:setParent(body_hitbox)
-            body.base[1]:setPos(math.lerpVector(0.3, body.base[1]:getPos(), body_hitbox:localToWorld(Vector(0,0,0))))
-            body.base[1]:setAngles(body_hitbox:localToWorldAngles(Angle(4,0,0)))
+            local frametime = game.getTickInterval()
+            local targetPos = body_hitbox:localToWorld(Vector(0, 0, 0))
+            local targetAng = body_hitbox:localToWorldAngles(Angle(4, 0, 0))
+            body.base[1]:setPos(math.lerpVector(frametime * 3, body.base[1]:getPos(), targetPos))
+            body.base[1]:setAngles(math.lerpAngle(frametime * 3, body.base[1]:getAngles(), targetAng))
+            
+            -- Create warp arrival effect
+            if WARP_TIMER < 100000.2 and isValid(body.base[1]) then
+                createWarpEffectHolo(body.base[1]:getPos(), body.base[1]:getAngles(), body.base[1])
+                astrosounds.play("warp", body.base[1]:getPos())
+            end
+            
+            setAllHolosVisible(true)
         end
     end)
-    
+
     -----------------
     -- Input control
     -----------------
@@ -561,7 +621,7 @@ if SERVER then
             end
             return
         end
-        
+
         if astro.state ~= STATES.Idle then return end
         if key == MOUSE.MOUSE1 then
             local blasterName = blasterOrder[currentBlasterIndex]
@@ -790,12 +850,19 @@ else
                 local targetAng = ghost_camera_ang or last_valid_warp_cam_ang or ang
 
                 if targetPos and not targetPos:isZero() then
-                    ghost_camera_render_pos = ghost_camera_render_pos or targetPos
-                    ghost_camera_render_ang = ghost_camera_render_ang or targetAng
+                    -- Initialize render positions on first frame
+                    if not ghost_camera_render_pos or ghost_camera_render_pos:isZero() then
+                        ghost_camera_render_pos = targetPos
+                    end
+                    if not ghost_camera_render_ang then
+                        ghost_camera_render_ang = targetAng
+                    end
 
                     local frametime = game.getTickInterval() or 0.016
-                    local smoothPos = frametime * 3
-                    local smoothAng = frametime * 5
+                    
+                    -- Use higher lerp coefficients for buttery smooth camera
+                    local smoothPos = frametime * 8
+                    local smoothAng = frametime * 10
 
                     ghost_camera_render_pos = math.lerpVector(smoothPos, ghost_camera_render_pos, targetPos)
                     ghost_camera_render_ang = math.lerpAngle(smoothAng, ghost_camera_render_ang, targetAng)
